@@ -2,19 +2,38 @@
 """Base settings to build other settings files upon."""
 
 import ssl
+import os
 from pathlib import Path
 
 import environ
 
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# fartemis/
-APPS_DIR = BASE_DIR / "fartemis"
+from .ssm_loader import get_default_region, load_env_from_ssm
+ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+# kidecon/
+APPS_DIR = ROOT_DIR / "kidecon"
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
+ENV_FILE = str(ROOT_DIR / ".env")
+READ_DOT_ENV_FILE = os.path.isfile(ENV_FILE)
 if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
-    env.read_env(str(BASE_DIR / ".env"))
+    # Operating System Environment variables have precedence over variables defined in the .env file,
+    # that is to say variables from the .env files will only be used if not defined
+    # as environment variables.
+    print("Loading : {}".format(ENV_FILE))
+    env.read_env(ENV_FILE)
+    print("The .env file has been loaded. See base.py for more information")
+
+
+
+APPLICATION_NAME = "kidecon"
+if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
+    region = get_default_region()
+    print(f"Loading enviroinment [{SSM_ENVIRONMENT}] for parameter store in {region}")
+    # everyone gets global group
+    load_env_from_ssm(f"/{APPLICATION_NAME}/global/config/", region)
+    load_env_from_ssm(f"/{APPLICATION_NAME}/global/secret/", region)
+    load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/config/", region)
+    load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/secret/", region)
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -41,7 +60,7 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#locale-paths
-LOCALE_PATHS = [str(BASE_DIR / "locale")]
+LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -151,7 +170,7 @@ MIDDLEWARE = [
 # STATIC
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(BASE_DIR / "staticfiles")
+STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
@@ -358,3 +377,14 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+# open AI tools
+OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default=None)
+
+# LANGSMITH
+LANGSMITH_TRACING = env.bool("LANGSMITH_TRACING", default=False)
+LANGSMITH_ENDPOINT = env("LANGSMITH_ENDPOINT", default=None)
+LANGSMITH_API_KEY = env("LANGSMITH_API_KEY", default=None)
+LANGSMITH_PROJECT = env("LANGSMITH_PROJECT", default=None)
+
+TAVILY_API_KEY = env("TAVILY_API_KEY", default=None)
