@@ -59,6 +59,9 @@ docs/_build/
 # PyBuilder
 target/
 
+# pyenv
+.python-version
+
 # celery beat schedule file
 celerybeat-schedule
 
@@ -66,6 +69,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+env/
 
 # Rope project settings
 .ropeproject
@@ -158,6 +162,8 @@ typings/
 
 # Local History for devcontainer
 .devcontainer/bash_history
+# Local History for Visual Studio Code
+.history/
 
 
 
@@ -276,3 +282,11 @@ fartemis/media/
 .env
 .envs/*
 !.envs/.local/
+
+# finagg
+findata*
+data/findata*
+data/plots*
+
+# jupyter
+.ipynb_checkpoints*
