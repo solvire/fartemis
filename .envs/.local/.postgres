@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=fartemis
+POSTGRES_USER=HDnsGLiLFwnhswmPIMzgSjQojQKhXBvI
+POSTGRES_PASSWORD=8mKp7mPOlF8BURH8qgKhiFMm7eAjqk45PKOX16cm0yRlLuY3xjveZjhe9mgsU2cr
