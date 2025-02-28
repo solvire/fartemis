@@ -1,6 +1,6 @@
-# fartemis
+# FARTEMIS ALPHA
 
-The gasseous ether, the goddess agent of job hunting.
+The gasseous ether from whence; the goddess agent of job hunting.
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -10,6 +10,30 @@ License: MIT
 ## Settings
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
+
+
+## Setup
+
+### Local setup without docker on ubuntu
+
+
+This is my flavor
+
+Virtual env: 
+    virtualenv -p python3.11 env
+    . env/bin/activate
+
+    pip install -r requirements/local.txt
+
+
+### Set up the database
+
+    CREATE ROLE fartemis WITH LOGIN PASSWORD 'your_secure_password';
+    ALTER ROLE fartemis CREATEDB;  -- Allows creating databases (if needed)
+    GRANT ALL PRIVILEGES ON DATABASE your_database TO fartemis;
+    CREATE DATABASE fartemis OWNER fartemis;
+
+
 
 ## Basic Commands
 

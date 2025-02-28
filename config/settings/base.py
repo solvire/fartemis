@@ -9,8 +9,8 @@ import environ
 
 from .ssm_loader import get_default_region, load_env_from_ssm
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# kidecon/
-APPS_DIR = ROOT_DIR / "kidecon"
+# fartemis/
+APPS_DIR = ROOT_DIR / "fartemis"
 env = environ.Env()
 
 ENV_FILE = str(ROOT_DIR / ".env")
@@ -25,7 +25,7 @@ if READ_DOT_ENV_FILE:
 
 
 
-APPLICATION_NAME = "kidecon"
+APPLICATION_NAME = "fartemis"
 if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
     region = get_default_region()
     print(f"Loading enviroinment [{SSM_ENVIRONMENT}] for parameter store in {region}")
@@ -106,6 +106,9 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "fartemis.users",
+    "fartemis.companies",
+    "fartemis.social",
+    "fartemis.inherits",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -388,3 +391,7 @@ LANGSMITH_API_KEY = env("LANGSMITH_API_KEY", default=None)
 LANGSMITH_PROJECT = env("LANGSMITH_PROJECT", default=None)
 
 TAVILY_API_KEY = env("TAVILY_API_KEY", default=None)
+
+BLUESKY_USERNAME = env("BLUESKY_USERNAME", default=None)
+BLUESKY_PASSWORD = env("BLUESKY_PASSWORD", default=None)
+BLUESKY_BASE_URL = env("BLUESKY_BASE_URL", default=None)
