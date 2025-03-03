@@ -120,6 +120,10 @@ class AnthropicClient(BaseLLMClient):
             # Convert the single prompt to a messages format
             messages = [{"role": "user", "content": prompt}]
             
+            # Ensure max_tokens is set
+            if "max_tokens" not in params:
+                params["max_tokens"] = 1000  # Default value
+            
             response = self.client.messages.create(
                 model=self.model,
                 messages=messages,
@@ -144,6 +148,10 @@ class AnthropicClient(BaseLLMClient):
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         params = self.default_params.copy()
         params.update(kwargs)
+
+        # Ensure max_tokens is set
+        if "max_tokens" not in params:
+            params["max_tokens"] = 1000  # Default value
         
         # Convert messages to Anthropic format if needed
         anthropic_messages = []
@@ -192,6 +200,10 @@ class AnthropicClient(BaseLLMClient):
     def function_call(self, messages: List[Dict[str, str]], functions: List[Dict[str, Any]], **kwargs) -> Dict[str, Any]:
         params = self.default_params.copy()
         params.update(kwargs)
+
+        # Ensure max_tokens is set
+        if "max_tokens" not in params:
+            params["max_tokens"] = 1000  # Default value
         
         # Convert functions to Anthropic's tools format
         tools = [{"type": "function", "function": func} for func in functions]
