@@ -29,3 +29,6 @@ drf-spectacular==0.28.0  # https://github.com/tfranzel/drf-spectacular
 ssm-parameter-store==19.11.0
 
 PyGithub==2.6.1
+
+#LLM stuff
+anthropic==0.49.0

@@ -109,6 +109,7 @@ LOCAL_APPS = [
     "fartemis.companies",
     "fartemis.social",
     "fartemis.inherits",
+    "fartemis.llm",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -401,3 +402,7 @@ GITHUB_BASE_URL = env("GITHUB_BASE_URL", default='https://api.github.com')
 GITHUB_REPO_OWNER = env("GITHUB_REPO_OWNER", default=None)
 GITHUB_REPO_NAME = env("GITHUB_REPO_NAME", default=None)
 GITHUB_REPO_BRANCH = env("GITHUB_REPO_BRANCH", default='master')
+
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default=None)
+
+OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
