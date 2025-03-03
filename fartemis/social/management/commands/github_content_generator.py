@@ -110,6 +110,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"Bluesky: {summary['short_content']}")
                 self.stdout.write(f"Twitter: {summary['micro_content']}")
                 self.stdout.write(f"Hashtags: {', '.join(summary['hashtags'])}")
+                self.stdout.write(f"Body: {summary['body']}")
             
             if options['verbose'] and documentation:
                 self.stdout.write('\n' + '=' * 50)
