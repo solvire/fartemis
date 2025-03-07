@@ -106,10 +106,11 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "fartemis.users",
-    "fartemis.companies",
     "fartemis.social",
+    "fartemis.companies",
     "fartemis.inherits",
-    "fartemis.llm",
+    "fartemis.llms",
+    "fartemis.jobboards",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -406,3 +407,19 @@ GITHUB_REPO_BRANCH = env("GITHUB_REPO_BRANCH", default='master')
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default=None)
 
 OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
+
+
+# job board integrations
+LINKEDIN_CLIENT_KEY = env("LINKEDIN_CLIENT_KEY", default=None)
+LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default=None)
+LINKEDIN_API_BASE_URL = env("LINKEDIN_API_BASE_URL", default='https://api.linkedin.com/v2')
+
+
+
+# # Other job board URLs for generic scraper
+# GLASSDOOR_BASE_URL = 'https://www.glassdoor.com'
+# MONSTER_BASE_URL = 'https://www.monster.com'
+# WELLFOUND_BASE_URL = 'https://wellfound.com'
+# REMOTE_OK_BASE_URL = 'https://remoteok.com'
+# WE_WORK_REMOTELY_BASE_URL = 'https://weworkremotely.com'
+# GITHUB_JOBS_BASE_URL = 'https://jobs.github.com'

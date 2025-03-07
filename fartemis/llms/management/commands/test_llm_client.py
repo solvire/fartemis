@@ -32,8 +32,8 @@ import logging
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
-from fartemis.llm.clients import LLMClientFactory
-from fartemis.llm.constants import LLMProvider, ModelName
+from fartemis.llms.clients import LLMClientFactory
+from fartemis.llms.constants import LLMProvider, ModelName
 
 logger = logging.getLogger(__name__)
 

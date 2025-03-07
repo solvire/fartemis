@@ -15,8 +15,8 @@ from fartemis.social.constants import Social, ContentType, ContentStatus, Conten
 from fartemis.social.models import PublishContent
 from fartemis.social.clients import APIClientFactory
 
-from fartemis.llm.clients import LLMClientFactory
-from fartemis.llm.constants import LLMProvider, ModelName
+from fartemis.llms.clients import LLMClientFactory
+from fartemis.llms.constants import LLMProvider, ModelName
 
 from fartemis.social.models import DocumentationEntry
 

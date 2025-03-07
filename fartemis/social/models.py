@@ -6,8 +6,10 @@ from django.db import models
 
 from fartemis.inherits.models import BaseIntModel
 from fartemis.social.constants import Social
+from fartemis.companies.models import CompanyProfile
 
 from .constants import ContentType, ContentOrigin, ContentStatus, PublicationStatus
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ class CompanySocialProfile(BaseIntModel):
     Stores social media profiles for companies
     """
     company = models.ForeignKey(
-        'companies.CompanyProfile',
+        CompanyProfile,  # Make sure companies app is in INSTALLED_APPS
         on_delete=models.CASCADE,
         related_name='social_profiles'
     )
@@ -92,9 +94,11 @@ class SocialPost(BaseIntModel):
     Tracks posts made by or about companies on social media
     """
     company = models.ForeignKey(
-        'companies.CompanyProfile',
+        CompanyProfile,  # Make sure companies app is in INSTALLED_APPS
         on_delete=models.CASCADE,
-        related_name='social_posts'
+        related_name='social_posts',
+        null=True,
+        blank=True
     )
     platform = models.ForeignKey(
         SocialPlatform,
@@ -110,6 +114,7 @@ class SocialPost(BaseIntModel):
                                         help_text="True if posted by company, False if about company")
     sentiment = models.FloatField(blank=True, null=True, 
                                 help_text="AI-analyzed sentiment score (-1.0 to 1.0)")
+
     
     class Meta:
         indexes = [

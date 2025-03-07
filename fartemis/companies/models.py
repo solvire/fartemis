@@ -1,9 +1,15 @@
+"""
+Models for job listings, job applications, and job search queries
+@author: solvire
+@date: 2025-03-03
+"""
 from django.db import models
+from django.utils import timezone
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-# from django_pandas.managers import DataFrameManager
 
 from fartemis.inherits.models import BaseIntModel
+from fartemis.jobboards.constants import JobSource, JobStatus, JobLevel, EmploymentType
 
 
 
@@ -50,6 +56,7 @@ class CompanyProfile(BaseIntModel):
     notes = models.TextField(blank=True, null=True)
     
     class Meta:
+        # app_label = 'fartemis.companies'
         verbose_name = "Company Profile"
         verbose_name_plural = "Company Profiles"
         
@@ -66,7 +73,6 @@ class CompanyProfile(BaseIntModel):
         elif self.employee_count_max:
             return f"Up to {self.employee_count_max:,}"
         return "Unknown"
-    
 
 
 class CompanyRole(BaseIntModel):
@@ -91,7 +97,7 @@ class UserCompanyAssociation(BaseIntModel):
         related_name='company_associations'
     )
     company = models.ForeignKey(
-        'companies.CompanyProfile',
+        CompanyProfile,
         on_delete=models.CASCADE,
         related_name='personnel'
     )
@@ -139,8 +145,6 @@ class UserCompanyAssociation(BaseIntModel):
         
     def __str__(self):
         return f"{self.user} at {self.company} - {self.job_title or 'No title'}"
-    
-
 
 
 class Industry(BaseIntModel):
@@ -164,7 +168,7 @@ class CompanyIndustry(BaseIntModel):
     Many-to-many relationship between companies and industries
     """
     company = models.ForeignKey(
-        'CompanyProfile',
+        CompanyProfile,
         on_delete=models.CASCADE,
         related_name='industry_associations'
     )
@@ -212,7 +216,7 @@ class CompanyTechnology(BaseIntModel):
     Many-to-many relationship between companies and technologies they use
     """
     company = models.ForeignKey(
-        'CompanyProfile',
+        CompanyProfile,
         on_delete=models.CASCADE,
         related_name='technologies'
     )
@@ -228,6 +232,4 @@ class CompanyTechnology(BaseIntModel):
     
     def __str__(self):
         return f"{self.company} - {self.technology}"
-    
-
 

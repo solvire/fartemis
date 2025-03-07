@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Optional, Union
 
 import anthropic
 
-from fartemis.llm.constants import LLMProvider, ModelName
+from fartemis.llms.constants import LLMProvider, ModelName
 
 logger = logging.getLogger(__name__)
 
