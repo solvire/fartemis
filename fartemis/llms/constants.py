@@ -1,12 +1,5 @@
 # fartemis/llm/constants.py
 
-class LLMProvider:
-    ANTHROPIC = "anthropic"
-    OPENAI = "openai"
-    MISTRAL = "mistral"
-    GOOGLE = "google"
-    OLLAMA = "ollama"
-
 class ModelName:
     # Anthropic models
     CLAUDE_3_OPUS = "claude-3-opus-20240229"
@@ -28,3 +21,29 @@ class ModelName:
     
     # Ollama models
     LLAMA_3 = "llama3"
+
+
+class LLMProvider:
+    """LLM provider constants."""
+    
+    ANTHROPIC = 'anthropic'
+    OPENAI = 'openai'  # For future extension
+    MISTRAL = "mistral"
+    GOOGLE = "google"
+    OLLAMA = "ollama"
+    
+    CHOICES = [
+        (ANTHROPIC, 'Anthropic (Claude)'),
+        (OPENAI, 'OpenAI (GPT)'),
+        (MISTRAL, 'Mistral'),
+        (GOOGLE, 'Google (Gemini)'),
+        (OLLAMA, 'Ollama'),
+    ]
+    
+    @classmethod
+    def get_display_name(cls, provider):
+        """Get display name for provider."""
+        for choice in cls.CHOICES:
+            if choice[0] == provider:
+                return choice[1]
+        return provider

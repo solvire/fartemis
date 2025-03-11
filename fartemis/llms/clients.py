@@ -258,17 +258,43 @@ class LLMClientFactory:
         if provider == LLMProvider.ANTHROPIC:
             model = model or ModelName.CLAUDE_3_SONNET
             return AnthropicClient(api_key=api_key, model=model, **kwargs)
-        elif provider == LLMProvider.OPENAI:
-            model = model or ModelName.GPT_4_TURBO
-            return OpenAIClient(api_key=api_key, model=model, **kwargs)
-        elif provider == LLMProvider.MISTRAL:
-            model = model or ModelName.MISTRAL_LARGE
-            return MistralClient(api_key=api_key, model=model, **kwargs)
-        elif provider == LLMProvider.GOOGLE:
-            model = model or ModelName.GEMINI_PRO
-            return GoogleClient(api_key=api_key, model=model, **kwargs)
-        elif provider == LLMProvider.OLLAMA:
-            model = model or ModelName.LLAMA_3
-            return OllamaClient(api_key=api_key, model=model, **kwargs)
+        # elif provider == LLMProvider.OPENAI:
+        #     model = model or ModelName.GPT_4_TURBO
+        #     return OpenAIClient(api_key=api_key, model=model, **kwargs)
+        # elif provider == LLMProvider.MISTRAL:
+        #     model = model or ModelName.MISTRAL_LARGE
+        #     return MistralClient(api_key=api_key, model=model, **kwargs)
+        # elif provider == LLMProvider.GOOGLE:
+        #     model = model or ModelName.GEMINI_PRO
+        #     return GoogleClient(api_key=api_key, model=model, **kwargs)
+        # elif provider == LLMProvider.OLLAMA:
+        #     model = model or ModelName.LLAMA_3
+        #     return OllamaClient(api_key=api_key, model=model, **kwargs)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
+
+
+class LLMClientFactory:
+    """Factory for creating LLM clients."""
+    
+    @staticmethod
+    def create(provider: str, api_key: Optional[str] = None, **kwargs) -> BaseLLMClient:
+        """
+        Create an LLM client based on provider.
+        
+        Args:
+            provider: The LLM provider (e.g., 'anthropic', 'openai')
+            api_key: Optional API key
+            **kwargs: Additional configuration parameters
+            
+        Returns:
+            BaseLLMClient instance
+            
+        Raises:
+            ValueError: If provider is not supported
+        """
+        if provider == LLMProvider.ANTHROPIC:
+            model = model or ModelName.CLAUDE_3_SONNET
+            return AnthropicClient(api_key=api_key, model=model, **kwargs)
+        else:
+            raise ValueError(f"Unsupported LLM provider: {provider}")

@@ -32,3 +32,9 @@ PyGithub==2.6.1
 
 #LLM stuff
 anthropic==0.49.0
+
+
+# Job board and RSS feeds
+feedparser==6.0.11
+linkedin-api==2.3.1
+
