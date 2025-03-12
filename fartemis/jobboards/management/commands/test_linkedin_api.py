@@ -1,5 +1,26 @@
 # File: fartemis/jobboards/management/commands/test_linkedin_api.py
+"""
+NOTE: does not work currently. Waiting on LinkedIn API access approval.
 
+
+# Basic job search
+python manage.py test_linkedin_api --query "python developer"
+
+# More specific search
+python manage.py test_linkedin_api --query "django developer" --location "San Francisco" --remote --level senior
+
+# Get detailed job information
+python manage.py test_linkedin_api --query "machine learning" --full
+
+# Save results to database
+python manage.py test_linkedin_api --query "data scientist" --save
+
+# Debug mode to see API responses
+python manage.py test_linkedin_api --query "software engineer" --debug
+
+# Get specific job details
+python manage.py test_linkedin_api --job-id "3634446281"
+"""
 import json
 import sys
 from django.core.management.base import BaseCommand, CommandError
