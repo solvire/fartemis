@@ -283,6 +283,8 @@ fartemis/media/
 .envs/*
 !.envs/.local/
 
+data/jobs*
+
 # finagg
 findata*
 data/findata*
