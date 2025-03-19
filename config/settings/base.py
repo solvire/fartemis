@@ -11,6 +11,7 @@ from .ssm_loader import get_default_region, load_env_from_ssm
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # fartemis/
 APPS_DIR = ROOT_DIR / "fartemis"
+DATA_DIR = ROOT_DIR / "data"
 env = environ.Env()
 
 ENV_FILE = str(ROOT_DIR / ".env")
@@ -336,9 +337,13 @@ ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_LOGIN_METHODS = {"email"}
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
+
+# New format 
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_USERNAME_REQUIRED = False
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # https://docs.allauth.org/en/latest/account/configuration.html
@@ -413,7 +418,8 @@ OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
 LINKEDIN_CLIENT_KEY = env("LINKEDIN_CLIENT_KEY", default=None)
 LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default=None)
 LINKEDIN_API_BASE_URL = env("LINKEDIN_API_BASE_URL", default='https://api.linkedin.com/v2')
-
+LINKEDIN_USERNAME = env("LINKEDIN_USERNAME", default=None)
+LINKEDIN_PASSWORD = env("LINKEDIN_PASSWORD", default=None)
 
 
 # # Other job board URLs for generic scraper

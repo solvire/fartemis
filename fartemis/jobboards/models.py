@@ -41,6 +41,12 @@ class JobSearchQuery(BaseIntModel):
         self.last_executed = timezone.now()
         self.save()
         return results
+    
+
+    class Meta:
+        # app_label = 'fartemis.jobboards'
+        verbose_name = _('Feed Fetch Log')
+        verbose_name_plural = _('Feed Fetch Logs')
 
 
 class Job(BaseIntModel):
@@ -73,10 +79,12 @@ class Job(BaseIntModel):
     status = models.CharField(max_length=50, choices=JobStatus.CHOICES, default=JobStatus.NEW)
     relevance_score = models.FloatField(default=0.0, 
                                      help_text="Score from 0-1 indicating relevance to user profile")
-    search_queries = models.ManyToManyField('jobboards.JobSearchQuery', related_name='jobs')
+    search_queries = models.ManyToManyField(JobSearchQuery, related_name='jobs')
     keywords = models.JSONField(default=list, blank=True)
     # Fix Technology model reference and add related_name
-    required_skills = models.ManyToManyField('companies.Technology', related_name='required_by_jobs', blank=True)
+    # required_skills = models.ManyToManyField('companies.Technology', related_name='required_by_jobs', blank=True)
+    # changed this to a JSON field
+    required_skills = models.JSONField(default=list, blank=True)
     # Add related_name to avoid clashes
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobboard_jobs')
     
@@ -142,47 +150,25 @@ class FeedSource(BaseIntModel):
 
 
 class FeedItem(BaseIntModel):
-    """Represents a job posting from a feed."""
+    """Represents a raw job posting from a feed source before processing."""
     
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    url = models.URLField(max_length=500)
-    company_name = models.CharField(max_length=255, null=True, blank=True)
-    location = models.CharField(max_length=255, null=True, blank=True)
-    posted_date = models.DateTimeField(null=True, blank=True)
+    # Core identification
+    guid = models.CharField(max_length=255, help_text="Unique ID from source")
     
-    # Feed source relations
+    # Feed source relation
     source = models.ForeignKey(
         FeedSource, 
         related_name='items',
         on_delete=models.CASCADE
     )
     
-    # Reference to original item
-    guid = models.CharField(max_length=255)  # Unique ID from source
-    raw_data = models.JSONField(default=dict, blank=True)  # Original data
-    
-    # Company profile relation (if matched)
-    company_profile = models.ForeignKey(
-        'companies.CompanyProfile',
-        on_delete=models.SET_NULL,
-        related_name='feed_items',
-        null=True,
-        blank=True
-    )
-    
-    # Job analysis
-    technologies = models.ManyToManyField(
-        'companies.Technology',
-        related_name='mentioned_in_feed_items',
-        blank=True
-    )
+    # Raw data storage
+    raw_data = models.JSONField(default=dict, blank=True, help_text="Original data from source")
     
     # Processing status
-    is_processed = models.BooleanField(default=False)
-    is_relevant = models.BooleanField(default=True)  # Mark as False if not relevant
+    is_processed = models.BooleanField(default=False, help_text="Whether this item has been processed into a Job")
     
-    # Potential job relation
+    # Optional reference to created job (if any)
     job = models.ForeignKey(
         'jobboards.Job',
         on_delete=models.SET_NULL,
@@ -197,54 +183,13 @@ class FeedItem(BaseIntModel):
         verbose_name_plural = _('Feed Items')
         unique_together = ('source', 'guid')  # Ensure no duplicates
         indexes = [
-            models.Index(fields=['posted_date']),
             models.Index(fields=['is_processed']),
-            models.Index(fields=['is_relevant']),
         ]
     
     def __str__(self):
-        return f"{self.title} ({self.source.name})"
-    
-    def link_or_create_company_profile(self):
-        """Link to existing company profile or create new one."""
-        if self.company_profile:
-            return self.company_profile
-            
-        if not self.company_name:
-            return None
-            
-        # Try to find existing company by name
-        company = CompanyProfile.objects.filter(
-            models.Q(name__iexact=self.company_name) | 
-            models.Q(name__icontains=self.company_name)
-        ).first()
-        
-        if not company:
-            # Create new company profile
-            company = CompanyProfile.objects.create(
-                name=self.company_name,
-                status='researching'
-            )
-            
-        self.company_profile = company
-        self.save(update_fields=['company_profile'])
-        return company
-    
-    def extract_technologies(self, tech_list=None):
-        """Extract technologies mentioned in the job description."""
-        if tech_list is None:
-            # Get all technologies from database
-            tech_list = Technology.objects.all()
-            
-        found_techs = []
-        for tech in tech_list:
-            # Simple keyword matching - could be improved with NLP
-            if tech.name.lower() in self.description.lower() or tech.name.lower() in self.title.lower():
-                found_techs.append(tech)
-                
-        # Add found technologies
-        self.technologies.add(*found_techs)
-        return found_techs
+        # Extract title from raw_data if available, otherwise use guid
+        title = self.raw_data.get('title', self.guid) if isinstance(self.raw_data, dict) else self.guid
+        return f"{title} ({self.source.name})"
 
 
 class FeedFetchLog(BaseIntModel):

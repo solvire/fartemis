@@ -37,6 +37,31 @@ Virtual env:
 
 ## Basic Commands
 
+### Pulling Jobs from LinkedIn
+
+There is a command for pulling in jobs from linkedin. Below should get the data coming in. It will be stored in the FeedItem table. 
+
+    ./manage.py linkedin_jobs --keywords "Python Engineer" --location "San Francisco"
+
+### Find the geo_id from LinkedIn
+
+Sometimes you will need or want to find the geo_id of the location. There is a search tool that will scrape the screen and pull that information out. 
+
+
+    ./manage.py linkedin_geo_finder "Raleigh"
+
+1. Raleigh, North Carolina, United States
+   GeoID: 100197101
+   Type: GEO
+
+2. Raleigh-Durham-Chapel Hill Area
+   GeoID: 90000664
+   Type: GEO
+
+... cont. 
+
+
+
 ### Setting Up Your Users
 
 - To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.

@@ -10,9 +10,7 @@ from django.utils import timezone
 from django.db import transaction
 from datetime import datetime, timedelta
 
-from jobboards.constants import JobSource
-from jobboards.factories import JobBoardClientFactory
-from jobboards.models import Job, JobSearchQuery
+from .constants import JobSource
 from fartemis.llms.clients import LLMClientFactory
 from fartemis.llms.constants import LLMProvider, AnthropicClient
 
