@@ -11,12 +11,12 @@ from fartemis.companies.models import (
 
 @admin.register(CompanyProfile)
 class CompanyProfileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'headquarters_city', 'employee_size_display', 'status')
-    list_filter = ('status', 'is_public')
+    list_display = ('name', 'headquarters_city', 'employee_size_display')
+    list_filter = ('is_public',)
     search_fields = ('name', 'description', 'headquarters_city', 'headquarters_country')
     fieldsets = (
         (None, {
-            'fields': ('name', 'website', 'description', 'status')
+            'fields': ('name', 'website', 'description')
         }),
         ('Company Details', {
             'fields': ('founded_year', 'employee_count_min', 'employee_count_max', 

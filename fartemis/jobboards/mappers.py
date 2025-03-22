@@ -15,6 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from fartemis.jobboards.models import Job, JobSource, EmploymentType, FeedSource
+from fartemis.llms.clients import LLMClientFactory, LLMProvider
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,20 @@ class BaseJobMapper(ABC):
         
         # Remove duplicates and return
         return list(set(keywords))
+    
+    def extract_salary_info(self, description: str, user=None) -> Dict[str, Any]:
+        """
+        Extract salary information from a job description using pattern matching
+        and LLM-based extraction.
+        
+        Args:
+            description: The job description text to analyze
+            user: The user making the request, if applicable
+            
+        Returns:
+            Dict containing extracted salary information
+        """
+        return extract_salary_info(description, user)
 
 
 class LinkedInJobMapper(BaseJobMapper):
@@ -257,6 +272,12 @@ class LinkedInJobMapper(BaseJobMapper):
             
             # Extract keywords
             keywords = self.extract_keywords(title, description)
+
+            # Extract salary info
+            salary_info = self.extract_salary_info(description, user_obj)
+
+            logger.info("Looking at salary info")
+            logger.info(salary_info)
             
             # Create the job
             with transaction.atomic():
@@ -274,7 +295,10 @@ class LinkedInJobMapper(BaseJobMapper):
                     employment_type=employment_type,
                     required_skills=skills,
                     keywords=keywords,
-                    user=user_obj
+                    user=user_obj,
+                    salary_max=salary_info['salary_max'],
+                    salary_min=salary_info['salary_min'],
+                    salary_currency=salary_info.get('salary_currency','USD'),
                 )
             
             logger.info(f"Created new job: {title} at {company_name}")
@@ -371,3 +395,313 @@ class LinkedInJobMapper(BaseJobMapper):
         else:
             # Default to full-time
             return EmploymentType.FULL_TIME
+        
+
+
+### SALARY EXTRACTION ###
+
+
+def extract_salary_info(description: str, user=None) -> Dict[str, Any]:
+    """
+    Extract salary information from a job description using pattern matching
+    and LLM-based extraction.
+    
+    Args:
+        description (str): The job description text to analyze
+        user (User, optional): The user making the request, if applicable
+        
+    Returns:
+        Dict containing extracted salary information:
+        {
+            'has_salary': bool,
+            'salary_min': float or None,
+            'salary_max': float or None,
+            'salary_currency': str or USD,
+            'salary_period': str or None,  # 'yearly', 'monthly', 'hourly', etc.
+            'confidence': float,  # 0.0 to 1.0
+            'raw_match': str or None  # The text that was matched
+        }
+    """
+    # Default return structure
+    result = {
+        'has_salary': False,
+        'salary_min': None,
+        'salary_max': None, 
+        'salary_currency': 'USD',
+        'salary_period': None,
+        'confidence': 0.0,
+        'raw_match': None
+    }
+    
+    if not description or len(description.strip()) == 0:
+        return result
+    
+    # First try pattern matching for common salary formats
+    pattern_result = _extract_salary_with_patterns(description)
+    
+    if pattern_result['has_salary'] and pattern_result['confidence'] > 0.8:
+        # High confidence match with regex, return without using LLM
+        return pattern_result
+    
+    # If no clear match or low confidence, use LLM for extraction
+    try:
+        llm_result = _extract_salary_with_llm(description, user)
+        
+        # If pattern matching found something but LLM has higher confidence, use LLM result
+        if (pattern_result['confidence'] < llm_result['confidence'] or 
+            not pattern_result['has_salary']):
+            return llm_result
+        
+        # Otherwise use pattern result
+        return pattern_result
+        
+    except Exception as e:
+        logger.error(f"Error extracting salary with LLM: {str(e)}")
+        # Fall back to pattern matching result if LLM fails
+        return pattern_result
+
+
+def _extract_salary_with_patterns(description: str) -> Dict[str, Any]:
+    """
+    Extract salary information using regex pattern matching.
+    """
+    result = {
+        'has_salary': False,
+        'salary_min': None,
+        'salary_max': None, 
+        'salary_currency': 'USD',
+        'salary_period': None,
+        'confidence': 0.0,
+        'raw_match': None
+    }
+    
+    # Common currency symbols and their corresponding currencies
+    currency_symbols = {
+        '$': 'USD',
+        '€': 'EUR',
+        '£': 'GBP',
+        '¥': 'JPY',
+        '₹': 'INR',
+        'A$': 'AUD',
+        'C$': 'CAD',
+        'CHF': 'CHF',
+        'NZ$': 'NZD',
+    }
+    
+    # Pattern for matching salary ranges with currency symbols
+    # For example: "$80,000 - $120,000" or "$80k-$120k" or "$80,000 to $120,000"
+    salary_range_pattern = r'(?P<currency>[A-Z]{3}|\$|€|£|¥|₹|A\$|C\$|CHF|NZ\$)\s*(?P<min>[\d,.]+[k]?)\s*(?:-|to|–)\s*(?P<currency2>[A-Z]{3}|\$|€|£|¥|₹|A\$|C\$|CHF|NZ\$)?\s*(?P<max>[\d,.]+[k]?)'
+    
+    # Alternative pattern for single salary values
+    # For example: "up to $120,000" or "from $80,000"
+    single_salary_pattern = r'(?:up to|from|starting at|minimum)\s+(?P<currency>[A-Z]{3}|\$|€|£|¥|₹|A\$|C\$|CHF|NZ\$)\s*(?P<amount>[\d,.]+[k]?)'
+    
+    # Period identifiers
+    period_keywords = {
+        'year': 'yearly',
+        'annual': 'yearly',
+        'annually': 'yearly',
+        'month': 'monthly',
+        'hour': 'hourly',
+        'day': 'daily',
+        'week': 'weekly',
+    }
+    
+    # Search for salary ranges
+    match = re.search(salary_range_pattern, description, re.IGNORECASE)
+    
+    if match:
+        result['raw_match'] = match.group(0)
+        result['has_salary'] = True
+        
+        # Process currency
+        currency_symbol = match.group('currency')
+        result['salary_currency'] = currency_symbols.get(currency_symbol, currency_symbol)
+        
+        # Process min and max values
+        min_value = match.group('min')
+        max_value = match.group('max')
+        
+        # Convert k notation to full numbers
+        min_value = _convert_k_notation(min_value)
+        max_value = _convert_k_notation(max_value)
+        
+        result['salary_min'] = min_value
+        result['salary_max'] = max_value
+        
+        # Look for period indicators near the match
+        context = description[max(0, match.start()-30):min(len(description), match.end()+30)]
+        for keyword, period in period_keywords.items():
+            if re.search(r'\b' + keyword + r'\b', context, re.IGNORECASE):
+                result['salary_period'] = period
+                break
+                
+        if not result['salary_period']:
+            # Default to yearly if no period is specified
+            result['salary_period'] = 'yearly'
+            
+        result['confidence'] = 0.9  # High confidence for well-formed ranges
+        return result
+    
+    # If no range found, try single salary patterns
+    match = re.search(single_salary_pattern, description, re.IGNORECASE)
+    
+    if match:
+        result['raw_match'] = match.group(0)
+        result['has_salary'] = True
+        
+        # Process currency
+        currency_symbol = match.group('currency')
+        result['salary_currency'] = currency_symbols.get(currency_symbol, currency_symbol)
+        
+        # Process the amount
+        amount = match.group('amount')
+        amount = _convert_k_notation(amount)
+        
+        # Determine if it's min or max based on the prefix
+        prefix = match.group(0).split()[0].lower()
+        if prefix in ['up', 'maximum']:
+            result['salary_max'] = amount
+        else:  # 'from', 'starting', 'minimum'
+            result['salary_min'] = amount
+            
+        # Look for period indicators
+        context = description[max(0, match.start()-30):min(len(description), match.end()+30)]
+        for keyword, period in period_keywords.items():
+            if re.search(r'\b' + keyword + r'\b', context, re.IGNORECASE):
+                result['salary_period'] = period
+                break
+                
+        if not result['salary_period']:
+            # Default to yearly if no period is specified
+            result['salary_period'] = 'yearly'
+            
+        result['confidence'] = 0.7  # Lower confidence for single values
+        return result
+    
+    return result
+
+
+def _extract_salary_with_llm(description: str, user=None) -> Dict[str, Any]:
+    """
+    Extract salary information using the LLM.
+    
+    Args:
+        description (str): The job description text
+        user (User, optional): The user making the request, if applicable
+        
+    Returns:
+        Dict with the extracted salary information
+    """
+    result = {
+        'has_salary': False,
+        'salary_min': None,
+        'salary_max': None, 
+        'salary_currency': None,
+        'salary_period': None,
+        'confidence': 0.0,
+        'raw_match': None
+    }
+    
+    # Create LLM client
+    llm_client = LLMClientFactory.create(LLMProvider.ANTHROPIC)
+    
+    # Prepare prompt
+    prompt = f"""
+You are a salary extraction expert. Extract salary information from the following job description. 
+Pay special attention to phrases like "Pay Range:", "Salary Range:", "Compensation Range:", etc.
+
+Return ONLY a JSON object with the following structure:
+{{
+  "has_salary": true or false,
+  "salary_min": minimum salary as a number (no commas, currency symbols, or 'k'), or null if not found,
+  "salary_max": maximum salary as a number (no commas, currency symbols, or 'k'), or null if not found,
+  "salary_currency": three-letter currency code (e.g., "USD", "EUR"), or null if not found,
+  "salary_period": "hourly", "daily", "weekly", "monthly", "yearly", or null if not found,
+  "confidence": a number between 0.0 and 1.0 indicating your confidence in the extraction,
+  "raw_match": the exact text that contains the salary information, or null if not found
+}}
+
+Pay special attention to explicitly labeled salary information. 
+Ignore any mentions of year ranges (like "1-2 years") that are not salary-related.
+
+Job Description:
+{description}
+"""
+
+    # Call the LLM
+    try:
+        response = llm_client.complete(prompt, max_tokens=500, temperature=0.0)
+        response_text = response.get('text', '').strip()
+        
+        # Extract JSON from response (handling potential non-JSON text)
+        import json
+        import re
+        
+        # Try to find JSON object in the response
+        json_match = re.search(r'({[\s\S]*})', response_text)
+        if json_match:
+            json_str = json_match.group(1)
+            extracted_data = json.loads(json_str)
+            
+            # Validate the extracted data
+            if 'has_salary' in extracted_data:
+                # Convert string number values to actual numbers
+                if extracted_data.get('salary_min'):
+                    try:
+                        extracted_data['salary_min'] = float(extracted_data['salary_min'])
+                    except (ValueError, TypeError):
+                        extracted_data['salary_min'] = None
+                        
+                if extracted_data.get('salary_max'):
+                    try:
+                        extracted_data['salary_max'] = float(extracted_data['salary_max'])
+                    except (ValueError, TypeError):
+                        extracted_data['salary_max'] = None
+                
+                # Update result with extracted data
+                result.update(extracted_data)
+                
+                # If LLM found salary but didn't set confidence, set a default
+                if result['has_salary'] and result['confidence'] == 0.0:
+                    result['confidence'] = 0.8
+                    
+                return result
+        
+        # If we couldn't parse the JSON or it's not in the expected format
+        logger.warning(f"Could not parse LLM response as valid salary JSON: {response_text}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error calling LLM for salary extraction: {str(e)}")
+        return result
+
+
+def _convert_k_notation(value_str: str) -> float:
+    """
+    Convert a string value with possible 'k' notation to a float.
+    
+    Examples:
+        "80k" -> 80000.0
+        "80,000" -> 80000.0
+        "80" -> 80.0
+    """
+    if not value_str:
+        return None
+        
+    # Remove any commas and currency symbols
+    value_str = value_str.replace(',', '').replace('$', '').replace('€', '').replace('£', '')
+    
+    # Check for 'k' notation
+    if value_str.lower().endswith('k'):
+        value_str = value_str[:-1]
+        try:
+            return float(value_str) * 1000
+        except ValueError:
+            return None
+    
+    # Regular number
+    try:
+        return float(value_str)
+    except ValueError:
+        return None

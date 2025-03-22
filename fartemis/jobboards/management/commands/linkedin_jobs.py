@@ -1,6 +1,8 @@
 """
 ./manage.py linkedin_jobs --keywords "Python Engineer" --location "San Francisco"
 """
+import time
+import random
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils import timezone
@@ -100,6 +102,12 @@ class Command(BaseCommand):
                 try:
                     # Extract job ID from entityUrn
                     job_id = job.get('jobId', job.get('entityUrn', '').split(':')[-1])
+
+                    # take a random nap to obscure detection
+                    self.stdout.write(f'Sleeping for a random time...')
+                    time.sleep(random.randint(1, 5))
+
+                    job_guid = f"{feed_source.name}_{job_id}"
                     
                     if not job_id:
                         self.stderr.write(f'Could not extract job ID from job {i}')
@@ -108,7 +116,7 @@ class Command(BaseCommand):
                     # Check if this job is already in the database
                     existing_item = FeedItem.objects.filter(
                         source=feed_source,
-                        guid=job_id
+                        guid=job_guid
                     ).first()
                     
                     if existing_item:
@@ -150,7 +158,7 @@ class Command(BaseCommand):
                     
                     # Create FeedItem to store the data
                     feed_item = FeedItem.objects.create(
-                        guid=job_id,
+                        guid=job_guid,
                         source=feed_source,
                         raw_data=combined_data,
                         is_processed=False

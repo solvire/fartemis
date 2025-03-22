@@ -106,7 +106,7 @@ if not admin.site.is_registered(Job):
                 'fields': ('status', 'relevance_score')
             }),
             (_('System Information'), {
-                'fields': ('user', 'created', 'updated'),
+                'fields': ('created', 'updated'),
                 'classes': ('collapse',),
             }),
         )

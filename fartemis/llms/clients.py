@@ -237,44 +237,6 @@ class AnthropicClient(BaseLLMClient):
 
 
 class LLMClientFactory:
-    """
-    Factory for creating LLM clients
-    """
-    
-    @staticmethod
-    def create(provider: str, api_key: str, model: str = None, **kwargs) -> BaseLLMClient:
-        """
-        Create an LLM client for the specified provider
-        
-        Args:
-            provider (str): Provider name from LLMProvider constants
-            api_key (str): API key for the provider
-            model (str, optional): Model name to use
-            **kwargs: Additional parameters for the client
-            
-        Returns:
-            BaseLLMClient: An initialized LLM client
-        """
-        if provider == LLMProvider.ANTHROPIC:
-            model = model or ModelName.CLAUDE_3_SONNET
-            return AnthropicClient(api_key=api_key, model=model, **kwargs)
-        # elif provider == LLMProvider.OPENAI:
-        #     model = model or ModelName.GPT_4_TURBO
-        #     return OpenAIClient(api_key=api_key, model=model, **kwargs)
-        # elif provider == LLMProvider.MISTRAL:
-        #     model = model or ModelName.MISTRAL_LARGE
-        #     return MistralClient(api_key=api_key, model=model, **kwargs)
-        # elif provider == LLMProvider.GOOGLE:
-        #     model = model or ModelName.GEMINI_PRO
-        #     return GoogleClient(api_key=api_key, model=model, **kwargs)
-        # elif provider == LLMProvider.OLLAMA:
-        #     model = model or ModelName.LLAMA_3
-        #     return OllamaClient(api_key=api_key, model=model, **kwargs)
-        else:
-            raise ValueError(f"Unsupported provider: {provider}")
-
-
-class LLMClientFactory:
     """Factory for creating LLM clients."""
     
     @staticmethod

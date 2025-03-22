@@ -35,22 +35,6 @@ class CompanyProfile(BaseIntModel):
     is_public = models.BooleanField(default=False)
     stock_symbol = models.CharField(max_length=10, blank=True, null=True)
     
-    # Current relationship status
-    STATUS_CHOICES = [
-        ('researching', 'Researching'),
-        ('target', 'Target Company'),
-        ('contacting', 'In Contact'),
-        ('applied', 'Applied To'),
-        ('interviewing', 'Interviewing With'),
-        ('rejected', 'Rejected By'),
-        ('not_interested', 'Not Interested In')
-    ]
-    status = models.CharField(
-        max_length=20, 
-        choices=STATUS_CHOICES, 
-        default='researching'
-    )
-    
     # AI-generated analysis and notes
     ai_analysis = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
