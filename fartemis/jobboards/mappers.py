@@ -257,6 +257,10 @@ class LinkedInJobMapper(BaseJobMapper):
             
             if not posted_date:
                 posted_date = timezone.now()
+
+            # Convert naive timestamp to aware datetime
+            if posted_date and timezone.is_naive(posted_date):
+                posted_date = timezone.make_aware(posted_date)
             
             # Combine summary data with raw_data
             raw_data.update({"job_summary": job_summary})
@@ -278,7 +282,28 @@ class LinkedInJobMapper(BaseJobMapper):
 
             logger.info("Looking at salary info")
             logger.info(salary_info)
-            
+            # print(apply_url)
+
+            # field_lengths = {
+            #     'title': len(title) if title else 0,
+            #     'description': len(description) if description else 0,
+            #     'url': len(apply_url) if apply_url else 0,
+            #     'company_name': len(company_name) if company_name else 0,
+            #     'location': len(location) if location else 0,
+            #     'source_id': len(job_id) if job_id else 0,
+            #     'salary_currency': len(salary_info.get('salary_currency', 'USD')) if salary_info.get('salary_currency') else 3,
+            #     'employment_type': len(employment_type) if employment_type else 0,
+            #     'required_skills': len(skills) if skills else 0,
+            #     'keywords': len(keywords) if keywords else 0,
+            #     'description_html': len(description_html) if description_html else 0,
+            #     'posted_date': len(str(posted_date)) if posted_date else 0,
+            #     'salary_max': len(str(salary_info.get('salary_max'))) if salary_info.get('salary_max') else 0,
+            #     'salary_min': len(str(salary_info.get('salary_min'))) if salary_info.get('salary_min') else 0,
+            #     # Add any other string fields that might be causing the issue
+            # }
+        
+            # logger.info(f"Field lengths: {field_lengths}")
+
             # Create the job
             with transaction.atomic():
                 job = Job.objects.create(

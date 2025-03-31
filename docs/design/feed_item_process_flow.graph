@@ -1,0 +1,48 @@
+flowchart TB
+    LinkedIn(["LinkedIn Jobs API"]) --> FetchCmd["linkedin_jobs Command"]
+    FetchCmd -->|"Fetch & Store"| FeedItem[(FeedItem DB)]
+    
+    subgraph "Data Collection"
+        FetchCmd
+        FeedItem
+    end
+    
+    FeedItem -->|"fetch raw data"| ProcessCmd["process_feed_items Command"]
+    
+    subgraph "Data Processing"
+        ProcessCmd
+        JobMapper["LinkedInJobMapper"]
+        CompanyMapper["CompanyMapper"]
+        SalaryExtract["Salary Extractor"]
+        ProcessCmd --> JobMapper
+        ProcessCmd --> CompanyMapper
+        JobMapper --> SalaryExtract
+    end
+    
+    JobMapper -->|"transform data"| JobDB[(Job DB)]
+    CompanyMapper -->|"create/update"| CompanyDB[(Company Profiles)]
+    SalaryExtract -->|"extract salary data"| SalaryInfo["Salary Information"]
+    SalaryInfo --> JobDB
+    
+    JobDB --> QueryEngine["Query Engine"]
+    CompanyDB --> QueryEngine
+    
+    subgraph "Application Layer"
+        QueryEngine
+        RecommendationEngine["Recommendation Engine"]
+        UserInterface["Fartemis User Interface"]
+        QueryEngine --> RecommendationEngine
+        RecommendationEngine --> UserInterface
+    end
+    
+    classDef api fill:#f9a,stroke:#333,stroke-width:2px
+    classDef command fill:#aef,stroke:#333,stroke-width:2px
+    classDef mapper fill:#fea,stroke:#333,stroke-width:2px
+    classDef database fill:#afa,stroke:#333,stroke-width:2px
+    classDef ui fill:#e9f,stroke:#333,stroke-width:2px
+    
+    class LinkedIn api
+    class FetchCmd,ProcessCmd command
+    class JobMapper,CompanyMapper,SalaryExtract mapper
+    class FeedItem,JobDB,CompanyDB database
+    class UserInterface ui

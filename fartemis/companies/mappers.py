@@ -356,7 +356,8 @@ class CompanyMapper:
                 is_public=is_public,
                 stock_symbol=stock_symbol,
                 # Store LinkedIn ID in notes for now until we add a dedicated field
-                notes=f"LinkedIn ID: {linkedin_id}" if linkedin_id else None
+                notes=f"LinkedIn ID: {linkedin_id}" if linkedin_id else None,
+                linkedin_id=linkedin_id
             )
             
             return company

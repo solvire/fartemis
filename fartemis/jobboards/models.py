@@ -65,7 +65,7 @@ class Job(BaseIntModel):
     remote = models.BooleanField(default=False)
     description = models.TextField()
     description_html = models.TextField(blank=True)
-    url = models.URLField()
+    url = models.TextField()
     source = models.CharField(max_length=50, choices=JobSource.CHOICES)
     source_id = models.CharField(max_length=255, blank=True, 
                               help_text="ID of the job on the source platform")
@@ -73,7 +73,7 @@ class Job(BaseIntModel):
     expires_date = models.DateTimeField(null=True, blank=True)
     salary_min = models.IntegerField(null=True, blank=True)
     salary_max = models.IntegerField(null=True, blank=True)
-    salary_currency = models.CharField(max_length=3, default="USD")
+    salary_currency = models.CharField(max_length=3, default="USD", null=True, blank=True)
     employment_type = models.CharField(max_length=50, choices=EmploymentType.CHOICES, blank=True)
     job_level = models.CharField(max_length=50, choices=JobLevel.CHOICES, blank=True)
     status = models.CharField(max_length=50, choices=JobStatus.CHOICES, default=JobStatus.NEW)

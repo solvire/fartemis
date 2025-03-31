@@ -32,7 +32,15 @@ PyGithub==2.6.1
 
 #LLM stuff
 anthropic==0.49.0
+langgraph==0.3.19
+langchain-tavily==0.1.5
+langchain-anthropic==0.3.10
+langsmith==0.3.18
+tavily-python==0.5.1
 
+# crawling
+# beautiful soup
+bs4==0.0.2
 
 # Job board and RSS feeds
 feedparser==6.0.11

@@ -11,6 +11,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from fartemis.inherits.models import BaseIntModel
 from fartemis.jobboards.constants import JobSource, JobStatus, JobLevel, EmploymentType
 
+from . import constants
+
 
 
 class CompanyProfile(BaseIntModel):
@@ -20,7 +22,10 @@ class CompanyProfile(BaseIntModel):
     """
     name = models.CharField(max_length=255, verbose_name="Company Name")
     website = models.URLField(blank=True, null=True)
+    careers_page_url = models.URLField(blank=True, null=True)
+    open_jobs_count = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True, null=True)
+    linkedin_id = models.CharField(max_length=255, blank=True)
     
     # Company size and details
     founded_year = models.PositiveIntegerField(blank=True, null=True)
@@ -29,6 +34,7 @@ class CompanyProfile(BaseIntModel):
     
     # Location information
     headquarters_city = models.CharField(max_length=100, blank=True, null=True)
+    headquarters_state = models.CharField(max_length=100, blank=True, null=True)
     headquarters_country = models.CharField(max_length=100, blank=True, null=True)
     
     # Business classification
@@ -38,6 +44,31 @@ class CompanyProfile(BaseIntModel):
     # AI-generated analysis and notes
     ai_analysis = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+
+    funding_status = models.CharField(max_length=100, choices=constants.FundingStatus.CHOICES, blank=True)
+    funding_rounds = models.JSONField(default=list, blank=True)
+    latest_funding_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    latest_funding_date = models.DateField(null=True, blank=True)
+    total_funding = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+
+    # Sentiment data
+    glassdoor_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    indeed_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    employee_sentiment_score = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+
+    # Technical reputation
+    github_repos = models.IntegerField(null=True, blank=True)
+    github_stars = models.IntegerField(null=True, blank=True)
+    open_source_contribution_score = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    
+    # Continuous monitoring fields
+    last_sentiment_update = models.DateTimeField(null=True, blank=True)
+    last_funding_update = models.DateTimeField(null=True, blank=True)
+    
+    # Media and content
+    recent_news = models.JSONField(default=list, blank=True)
+    social_media_handles = models.JSONField(default=dict, blank=True)
+    sentiment_data_points = models.JSONField(default=dict, blank=True)
     
     class Meta:
         # app_label = 'fartemis.companies'
@@ -57,6 +88,46 @@ class CompanyProfile(BaseIntModel):
         elif self.employee_count_max:
             return f"Up to {self.employee_count_max:,}"
         return "Unknown"
+    
+class CompanyResearchReferences(BaseIntModel):
+    """
+    Links to external sources for company research
+    """
+    company = models.ForeignKey(
+        CompanyProfile,
+        on_delete=models.CASCADE,
+        related_name='research_references'
+    )
+    title = models.CharField(max_length=255)
+    url = models.URLField()
+    content = models.TextField(blank=True, null=True)
+    sentiment = models.CharField(max_length=100, choices=constants.CompanyReviewSentiment.CHOICES, blank=True)
+    
+    class Meta:
+        verbose_name = "Company Research Reference"
+        verbose_name_plural = "Company Research References"
+    
+    def __str__(self):
+        return self.title + " - " + self.sentiment
+    
+class CompanyResearchLog(BaseIntModel):
+    """
+    Log of research activities and results of AI content generation for a company
+    """
+    company = models.ForeignKey(
+        CompanyProfile,
+        on_delete=models.CASCADE,
+        related_name='research_logs'
+    )
+
+    content = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Company Research Log"
+        verbose_name_plural = "Company Research Logs"
+    
+    def __str__(self):
+        return f"{self.company}"
 
 
 class CompanyRole(BaseIntModel):

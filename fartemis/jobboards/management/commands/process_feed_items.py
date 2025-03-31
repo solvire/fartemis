@@ -217,7 +217,7 @@ class Command(BaseCommand):
                 return
         
         # Order by creation date (oldest first)
-        query = query.order_by('created_at')
+        query = query.order_by('created')
         
         # Limit if specified
         if limit:

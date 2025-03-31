@@ -240,13 +240,14 @@ class LLMClientFactory:
     """Factory for creating LLM clients."""
     
     @staticmethod
-    def create(provider: str, api_key: Optional[str] = None, **kwargs) -> BaseLLMClient:
+    def create(provider: str, api_key: Optional[str] = None, model: Optional[str] = None, **kwargs) -> BaseLLMClient:
         """
         Create an LLM client based on provider.
         
         Args:
             provider: The LLM provider (e.g., 'anthropic', 'openai')
             api_key: Optional API key
+            model: Model name to use (will default to an appropriate value if None)
             **kwargs: Additional configuration parameters
             
         Returns:
@@ -256,7 +257,8 @@ class LLMClientFactory:
             ValueError: If provider is not supported
         """
         if provider == LLMProvider.ANTHROPIC:
-            model = model or ModelName.CLAUDE_3_SONNET
+            if model is None:
+                model = ModelName.CLAUDE_3_SONNET
             return AnthropicClient(api_key=api_key, model=model, **kwargs)
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")

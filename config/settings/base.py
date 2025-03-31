@@ -392,10 +392,17 @@ OPENAI_API_KEY = env("OPENAI_API_KEY", default=None)
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default=None)
 
 # LANGSMITH
-LANGSMITH_TRACING = env.bool("LANGSMITH_TRACING", default=False)
+LANGSMITH_TRACING = env.bool("LANGSMITH_TRACING", default=True)
 LANGSMITH_ENDPOINT = env("LANGSMITH_ENDPOINT", default=None)
 LANGSMITH_API_KEY = env("LANGSMITH_API_KEY", default=None)
+LANGCHAIN_API_KEY = env("LANGCHAIN_API_KEY", default=LANGSMITH_API_KEY)
 LANGSMITH_PROJECT = env("LANGSMITH_PROJECT", default=None)
+LANGCHAIN_PROJECT = env("LANGCHAIN_PROJECT", default=LANGSMITH_PROJECT)
+
+# Claude MODELs
+CLAUDE_MODEL = env("CLAUDE_MODEL", default="claude-3-7-sonnet-latest")
+CLAUDE_MODEL_BIG = env("CLAUDE_MODEL_BIG", default="claude-3-7-sonnet-latest")
+CLAUDE_MODEL_SMALL = env("CLAUDE_MODEL_SMALL", default="claude-3-5-haiku-latest")
 
 TAVILY_API_KEY = env("TAVILY_API_KEY", default=None)
 
