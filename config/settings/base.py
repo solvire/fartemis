@@ -40,6 +40,9 @@ if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
+
+#also a debug but separate settings for mocking up API calls
+MOCK_DATA = env.bool("MOCK_DATA", False)
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -406,6 +409,10 @@ CLAUDE_MODEL_SMALL = env("CLAUDE_MODEL_SMALL", default="claude-3-5-haiku-latest"
 
 TAVILY_API_KEY = env("TAVILY_API_KEY", default=None)
 
+# DEEPSEEK
+DEEPSEEK_API_KEY = env("DEEPSEEK_API_KEY", default=None)
+
+# BLUESKY
 BLUESKY_USERNAME = env("BLUESKY_USERNAME", default=None)
 BLUESKY_PASSWORD = env("BLUESKY_PASSWORD", default=None)
 BLUESKY_BASE_URL = env("BLUESKY_BASE_URL", default=None)
@@ -428,6 +435,7 @@ LINKEDIN_API_BASE_URL = env("LINKEDIN_API_BASE_URL", default='https://api.linked
 LINKEDIN_USERNAME = env("LINKEDIN_USERNAME", default=None)
 LINKEDIN_PASSWORD = env("LINKEDIN_PASSWORD", default=None)
 
+ZYTE_API_KEY = env("ZYTE_API_KEY", default=None)
 
 # # Other job board URLs for generic scraper
 # GLASSDOOR_BASE_URL = 'https://www.glassdoor.com'

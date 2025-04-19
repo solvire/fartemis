@@ -275,6 +275,293 @@ class LinkedInClient(BaseAPIClient):
         }
 
 
+
+class ZyteClient(BaseAPIClient):
+    """
+    Client for Zyte API
+    """
+    
+    def __init__(self, **kwargs):
+        self.api_key = kwargs.get('api_key')
+        self.base_url = kwargs.get('base_url', 'https://api.zyte.com/v1')
+        self.use_mock_data = kwargs.get('use_mock_data', False)
+        
+        # If credentials are provided at init, set them
+        if self.api_key:
+            self.set_authentication(api_key=self.api_key, base_url=self.base_url)
+    
+    def set_authentication(self, **kwargs):
+        """
+        Set authentication for Zyte API
+        
+        Args:
+            api_key: Zyte API key
+            base_url: Base URL for API
+        """
+        if "base_url" in kwargs:
+            self.base_url = kwargs["base_url"]
+            
+        if "api_key" in kwargs:
+            self.api_key = kwargs["api_key"]
+            # Zyte uses basic auth with empty password
+            self.auth = (self.api_key, '')
+        else:
+            raise ValueError("api_key is required for Zyte authentication")
+            
+        logger.info(f"Zyte client authenticated with base URL: {self.base_url}")
+        return self
+        
+    def check_credentials(self) -> dict:
+        """
+        Verify Zyte credentials by making a test API call
+        
+        Returns:
+            dict: Account info if successful, None if failed
+        """
+        logger.info("Checking credentials for Zyte")
+        
+        if self.use_mock_data:
+            logger.warning("Using mock data - skipping credentials check")
+            return {"status": "mock_authenticated"}
+            
+        try:
+            # Make a simple API call to verify credentials
+            test_payload = {
+                "url": "https://example.com",
+                "httpResponseBody": True
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/extract",
+                auth=self.auth,
+                json=test_payload
+            )
+            
+            if response.status_code == 200:
+                return {"status": "authenticated"}
+            else:
+                logger.error(f"Zyte authentication failed: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to authenticate with Zyte: {str(e)}")
+            return None
+            
+    def search_jobs(self, query: str, location: str = '', **kwargs) -> List[Dict[str, Any]]:
+        """
+        Search for jobs using Zyte API
+        
+        Args:
+            query: Search term (e.g. "python developer")
+            location: Location (e.g. "San Francisco, CA")
+            **kwargs: Additional parameters
+            
+        Returns:
+            List of job listings
+        """
+        # If using mock data, return fake results
+        if self.use_mock_data:
+            return self._get_mock_search_results(query, location, **kwargs)
+            
+        # For job search, we need to find a job board URL first
+        job_board_url = f"https://www.linkedin.com/jobs/search?keywords={query}&location={location}"
+        
+        # Use Zyte API to extract job listings
+        payload = {
+            "url": job_board_url,
+            "browserHtml": True,
+            "jobPosting": True
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/extract",
+                auth=self.auth,
+                json=payload
+            )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            # Process job listings from the response
+            results = []
+            job_postings = data.get('jobPosting', {}).get('results', [])
+            
+            for job in job_postings:
+                job_details = self._extract_job_details(job)
+                results.append(job_details)
+                
+            return results
+            
+        except Exception as e:
+            logger.error(f"Zyte job search failed: {str(e)}")
+            return []
+            
+    def find_linkedin_profile(self, first_name: str, last_name: str, company_name: str = None) -> Dict[str, Any]:
+        """
+        Find a LinkedIn profile for a person
+        
+        This is a multi-step process:
+        1. Use Google search via Zyte to find potential LinkedIn profiles
+        2. Visit and extract information from the most relevant profile
+        
+        Args:
+            first_name: Person's first name
+            last_name: Person's last name
+            company_name: Optional company name for better targeting
+            
+        Returns:
+            Dictionary with profile information or empty dict if not found
+        """
+        # If using mock data, return fake results
+        if self.use_mock_data:
+            return self._get_mock_linkedin_profile(first_name, last_name, company_name)
+        
+        # Step 1: Use Google search to find LinkedIn profile
+        search_query = f"{first_name} {last_name}"
+        if company_name:
+            search_query += f" {company_name}"
+        search_query += " site:linkedin.com/in/"
+        
+        search_url = f"https://www.google.com/search?q={search_query}"
+        
+        try:
+            # Request Google search results
+            search_payload = {
+                "url": search_url,
+                "browserHtml": True
+            }
+            
+            search_response = requests.post(
+                f"{self.base_url}/extract",
+                auth=self.auth,
+                json=search_payload
+            )
+            
+            search_response.raise_for_status()
+            search_data = search_response.json()
+            
+            # Parse the HTML to find LinkedIn profile URLs
+            html_content = search_data.get("browserHtml", "")
+            
+            # Use regular expressions to find LinkedIn profile URLs
+            import re
+            linkedin_pattern = r'https?://(?:www\.)?linkedin\.com/in/[a-zA-Z0-9_-]+'
+            linkedin_urls = re.findall(linkedin_pattern, html_content)
+            
+            if not linkedin_urls:
+                logger.info(f"No LinkedIn profile URLs found for {first_name} {last_name}")
+                return {}
+            
+            # Step 2: Extract data from the most relevant profile
+            profile_url = linkedin_urls[0]
+            
+            # Request profile data
+            profile_payload = {
+                "url": profile_url,
+                "browserHtml": True
+            }
+            
+            profile_response = requests.post(
+                f"{self.base_url}/extract",
+                auth=self.auth,
+                json=profile_payload
+            )
+            
+            profile_response.raise_for_status()
+            profile_data = profile_response.json()
+            
+            # Extract profile information from HTML
+            html_content = profile_data.get("browserHtml", "")
+            
+            # Extract basic profile information
+            # This is a simplified approach - production code would need more robust parsing
+            name_match = re.search(r'<title>(.*?)\s*\|\s*LinkedIn</title>', html_content)
+            name = name_match.group(1) if name_match else f"{first_name} {last_name}"
+            
+            title_match = re.search(r'<h2[^>]*class="[^"]*mt1[^"]*"[^>]*>(.*?)</h2>', html_content)
+            title = title_match.group(1) if title_match else ""
+            
+            # Clean up title from HTML
+            if title:
+                title = re.sub(r'<[^>]+>', '', title).strip()
+            
+            # Extract handle from URL
+            handle = profile_url.split("/in/")[1].split("/")[0].split("?")[0]
+            
+            return {
+                "url": profile_url,
+                "handle": handle,
+                "name": name,
+                "title": title,
+                "source": JobSource.ZYTE
+            }
+            
+        except Exception as e:
+            logger.error(f"Error finding LinkedIn profile: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return {}
+    
+    def _get_mock_search_results(self, query: str, location: str = '', **kwargs) -> List[Dict[str, Any]]:
+        """Generate mock search results for testing"""
+        logger.warning("Using mock data for Zyte job search")
+        
+        # Generate 3 mock results
+        results = []
+        for i in range(3):
+            results.append({
+                'id': f"{i+1000}",
+                'title': f"{query.title()} Developer",
+                'company': f"Mock Company {i+1}",
+                'location': location or "Remote, US",
+                'remote': i % 2 == 0,
+                'description': f"This is a mock job description for a {query} position.",
+                'description_html': f"<p>This is a mock job description for a {query} position.</p>",
+                'url': f"https://www.linkedin.com/jobs/view/{i+1000}",
+                'posted_date': None,
+                'source': JobSource.ZYTE,
+            })
+            
+        return results
+        
+    def _get_mock_job_details(self, job_url: str) -> Dict[str, Any]:
+        """Generate mock job details for testing"""
+        logger.warning("Using mock data for Zyte job details")
+        
+        job_id = job_url.split("/")[-1]
+        
+        return {
+            'id': job_id,
+            'title': "Software Developer",
+            'company': "Mock Company",
+            'location': "San Francisco, CA",
+            'remote': True,
+            'description': "This is a detailed mock job description.",
+            'description_html': "<p>This is a detailed mock job description.</p>",
+            'url': job_url,
+            'posted_date': None,
+            'source': JobSource.ZYTE,
+        }
+        
+    def _get_mock_linkedin_profile(self, first_name: str, last_name: str, company_name: str = None) -> Dict[str, Any]:
+        """Generate mock LinkedIn profile data for testing"""
+        logger.warning("Using mock data for Zyte LinkedIn profile search")
+        
+        handle = f"{first_name.lower()}{last_name.lower()}"
+        
+        return {
+            'url': f"https://www.linkedin.com/in/{handle}/",
+            'handle': handle,
+            'name': f"{first_name} {last_name}",
+            'title': "Software Engineer",
+            'company': company_name or "Tech Company",
+            'location': "San Francisco Bay Area",
+            'source': JobSource.ZYTE
+        }
+
+
+
 class JobBoardClientFactory:
     """Factory for creating job board clients"""
     
@@ -284,7 +571,7 @@ class JobBoardClientFactory:
         Create and return a client for the specified job board
         
         Args:
-            client_name: Name of the job board ('linkedin', 'indeed', etc.)
+            client_name: Name of the job board ('linkedin', 'indeed', 'zyte', etc.)
             **kwargs: Additional parameters for client initialization
             
         Returns:
@@ -294,7 +581,7 @@ class JobBoardClientFactory:
             ValueError: If no client implementation exists for the client_name
         """
         # Use mock data in development by default
-        use_mock = kwargs.get('use_mock_data', settings.DEBUG)
+        use_mock = kwargs.get('use_mock_data', settings.MOCK_DATA)
         
         if client_name == 'linkedin':
             client = LinkedInClient(
@@ -305,6 +592,16 @@ class JobBoardClientFactory:
             )
             return client
             
+        elif client_name == 'zyte':
+            client = ZyteClient(
+                api_key=settings.ZYTE_API_KEY,
+                base_url=getattr(settings, 'ZYTE_API_BASE_URL', 'https://api.zyte.com/v1'),
+                use_mock_data=use_mock,
+                **kwargs
+            )
+            return client
+            
         # Additional clients would be added here
             
         raise ValueError(f"No client implementation for {client_name}")
+

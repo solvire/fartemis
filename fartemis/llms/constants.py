@@ -27,6 +27,7 @@ class LLMProvider:
     """LLM provider constants."""
     
     ANTHROPIC = 'anthropic'
+    DEEPSEEK = 'deepseek'
     OPENAI = 'openai'  # For future extension
     MISTRAL = "mistral"
     GOOGLE = "google"
@@ -34,6 +35,7 @@ class LLMProvider:
     
     CHOICES = [
         (ANTHROPIC, 'Anthropic (Claude)'),
+        (DEEPSEEK, 'DeepSeek'),
         (OPENAI, 'OpenAI (GPT)'),
         (MISTRAL, 'Mistral'),
         (GOOGLE, 'Google (Gemini)'),

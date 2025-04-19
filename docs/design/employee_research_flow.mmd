@@ -1,0 +1,91 @@
+flowchart TD
+    %% Main Workflow Components
+    subgraph "Employee Research Workflow"
+    
+    %% Input Sources
+    subgraph InputSources["Input Sources"]
+        JobListings["📄 Job Listings"]
+        CompanyProfiles["🏢 Company Profiles"]
+    end
+    
+    %% Research Process
+    subgraph ResearchProcess["Research Process"]
+        WebSearch["🤖 AI-Powered Web Search"]
+        TextExtraction["🔍 Text Extraction"]
+        PatternMatching["🧩 Pattern Matching"]
+        ResultPrioritization["🏆 Result Prioritization"]
+        ConfidenceScoring["💯 Confidence Scoring"]
+        SmartDeduplication["🧠 Smart Deduplication"]
+    end
+    
+    %% LinkedIn Profile Finder
+    subgraph LinkedInFinder["LinkedIn Profile Finder"]
+        MultiEngineSearch["🌐 Multi-Engine Search"]
+        PagePrioritization["📊 Page Prioritization"]
+        ProfileURLExtraction["🔗 Profile URL Extraction"]
+        HandleExtraction["👤 Handle Extraction"]
+        NameChangeDetection["📝 Name Change Detection"]
+        ProfileMatchScoring["🏅 Profile Match Scoring"]
+    end
+    
+    %% User Management
+    subgraph UserManagement["User Management"]
+        UserCreation["👤 User Record Creation"]
+        ProfileUpdates["🔄 Profile Updates"]
+        ContactMethodStorage["📇 Contact Method Storage"]
+        NameVariationTracking["📝 Name Variation Tracking"]
+        SourceLinkAssociation["🔗 Source Link Association"]
+        CompanyAssociation["🏢 Company Association"]
+    end
+    
+    %% Process Flow
+    Start["START: Job Listing or Company Profile"] --> Step1["STEP 1: Extract Names from Job/Company"]
+    Step1 --> Step2["STEP 2: Research Employees using AI"]
+    Step2 --> Step3["STEP 3: Find LinkedIn Profiles"]
+    Step3 --> Step4["STEP 4: Score Matches"]
+    Step4 --> Step5["STEP 5: Deduplicate Results"]
+    Step5 --> Step6["STEP 6: Create or Update User"]
+    Step6 --> Step7["STEP 7: Store Company Association"]
+    Step7 --> End["END: Complete Employee Profile"]
+    
+    %% Connect Components
+    JobListings --> Step1
+    CompanyProfiles --> Step1
+    Step2 --> WebSearch
+    WebSearch --> TextExtraction
+    TextExtraction --> PatternMatching
+    PatternMatching --> ResultPrioritization
+    ResultPrioritization --> ConfidenceScoring
+    ConfidenceScoring --> SmartDeduplication
+    SmartDeduplication --> Step5
+    
+    Step3 --> MultiEngineSearch
+    MultiEngineSearch --> PagePrioritization
+    PagePrioritization --> ProfileURLExtraction
+    ProfileURLExtraction --> HandleExtraction
+    HandleExtraction --> NameChangeDetection
+    NameChangeDetection --> ProfileMatchScoring
+    ProfileMatchScoring --> Step4
+    
+    Step6 --> UserCreation
+    UserCreation --> ProfileUpdates
+    ProfileUpdates --> ContactMethodStorage
+    ContactMethodStorage --> NameVariationTracking
+    NameVariationTracking --> SourceLinkAssociation
+    SourceLinkAssociation --> CompanyAssociation
+    CompanyAssociation --> Step7
+    
+    end
+    
+    %% Styling
+    classDef processBox fill:#f9f9f9,stroke:#333,stroke-width:1px
+    classDef inputBox fill:#d4f1f9,stroke:#333,stroke-width:1px
+    classDef linkedInBox fill:#d5e8d4,stroke:#333,stroke-width:1px
+    classDef userBox fill:#ffe6cc,stroke:#333,stroke-width:1px
+    classDef stepBox fill:#e1d5e7,stroke:#333,stroke-width:1px
+    
+    class InputSources,JobListings,CompanyProfiles inputBox
+    class ResearchProcess,WebSearch,TextExtraction,PatternMatching,ResultPrioritization,ConfidenceScoring,SmartDeduplication processBox
+    class LinkedInFinder,MultiEngineSearch,PagePrioritization,ProfileURLExtraction,HandleExtraction,NameChangeDetection,ProfileMatchScoring linkedInBox
+    class UserManagement,UserCreation,ProfileUpdates,ContactMethodStorage,NameVariationTracking,SourceLinkAssociation,CompanyAssociation userBox
+    class Start,Step1,Step2,Step3,Step4,Step5,Step6,Step7,End stepBox

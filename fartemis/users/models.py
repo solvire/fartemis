@@ -2,7 +2,7 @@
 from typing import ClassVar
 import uuid
 from django.contrib.auth.models import AbstractUser
-from django.db.models import CharField, UUIDField, EmailField
+from django.db.models import CharField, UUIDField, EmailField, JSONField
 from django.db import models
 from django.conf import settings
 
@@ -38,8 +38,29 @@ class User(AbstractUser):
     middle_name = CharField(
         max_length=145, null=True, blank=True, verbose_name=_("Middle Name")
     )
+    alternate_names = JSONField(
+        null=True, blank=True, verbose_name=_("Alternate Names")
+    )
     email = EmailField(_("email address"), unique=True)
     username = None  # type: ignore[assignment]
+
+    # social media handles
+    twitter_handle = CharField(
+        max_length=145, null=True, blank=True, verbose_name=_("Twitter Handle")
+    )
+    linkedin_handle = CharField(
+        max_length=145, null=True, blank=True, verbose_name=_("LinkedIn Handle")
+    )
+    github_handle = CharField(
+        max_length=145, null=True, blank=True, verbose_name=_("GitHub Handle")
+    )
+    bluesky_handle = CharField(
+        max_length=145, null=True, blank=True, verbose_name=_("Bluesky Handle")
+    )
+    substack_url = CharField(
+        max_length=145, null=True, blank=True, verbose_name=_("Substack URL")
+    )
+
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -54,6 +75,77 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
+
+
+
+class UserSourceLink(BaseIntModel):
+    """Stores source links for a user"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='source_links'
+    )
+    url = models.URLField()
+    source_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('linkedin', 'LinkedIn'),
+            ('article', 'Article'),
+            ('blog', 'Blog Post'),
+            ('mention', 'Mention'),
+            ('other', 'Other')
+        ]
+    )
+    title = models.CharField(max_length=255, blank=True)
+    discovery_date = models.DateTimeField(auto_now_add=True)
+    relevance_score = models.FloatField(default=0.5)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ('user', 'url')
+        
+    def __str__(self):
+        return f"{self.user} - {self.source_type}: {self.title}"
+
+
+# store additional emails
+class UserAdditionalEmail(BaseIntModel):
+    """
+    Stores additional emails for a user
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='additional_emails'
+    )
+    email = models.EmailField()
+    is_primary = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('user', 'email')
+        
+    def __str__(self):
+        return f"{self.user} - {self.email}"
+
+
+# store phone numbers
+class UserPhoneNumber(BaseIntModel):
+    """
+    Stores phone numbers for a user
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='phone_numbers'
+    )
+    phone_number = models.CharField(max_length=20)
+    is_primary = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('user', 'phone_number')
+        
+    def __str__(self):
+        return f"{self.user} - {self.phone_number}"
 
 
 class ContactMethodType(BaseIntModel):
