@@ -1,12 +1,14 @@
-from django.core.management.base import BaseCommand
-from fartemis.companies.controllers import CompanyResearchController
-from fartemis.companies.models import CompanyProfile
 import logging
+
+from django.core.management.base import BaseCommand
+from django.conf import settings
 
 # Import LLM classes
 from langchain.chat_models import init_chat_model
 from langchain_deepseek import ChatDeepSeek
 
+from fartemis.companies.controllers import CompanyResearchController
+from fartemis.companies.models import CompanyProfile
 from fartemis.llms.clients import LLMClientFactory
 from fartemis.llms.constants import LLMProvider
 
@@ -16,8 +18,8 @@ class Command(BaseCommand):
     help = 'Research company profiles and update them with AI-generated data'
 
     def add_arguments(self, parser):
-        parser.add_argument('--company-id', type=int, help='ID of specific company to research')
-        parser.add_argument('--batch-size', type=int, default=1, 
+        parser.add_argument('--company_id', type=int, help='ID of specific company to research')
+        parser.add_argument('--batch_size', type=int, default=1, 
                             help='Number of companies to process (default: 1)')
         parser.add_argument('--force', action='store_true', 
                             help='Force update even for recently updated companies')
@@ -25,14 +27,16 @@ class Command(BaseCommand):
             '--provider',
             type=str,
             choices=[p[0] for p in LLMProvider.CHOICES],
-            help=f'LLM provider to test (default: from settings)'
+            help=f'LLM provider to test (default: from settings)',
+            default=LLMProvider.DEEPSEEK
         )
         
         # Model selection
         parser.add_argument(
             '--model',
             type=str,
-            help='Model to use (provider-specific, uses default if not specified)'
+            help='Model to use (provider-specific, uses default if not specified)',
+            default=settings.DEEPSEEK_MODEL
         )
 
         # LLM parameters

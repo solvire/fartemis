@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from fartemis.companies.models import CompanyProfile, UserCompanyAssociation
 
 from fartemis.inherits.models import BaseIntModel
 
@@ -60,6 +61,19 @@ class User(AbstractUser):
     substack_url = CharField(
         max_length=145, null=True, blank=True, verbose_name=_("Substack URL")
     )
+
+
+    # --- Add the ManyToMany Relationship ---
+    # This links User to CompanyProfile through the UserCompanyAssociation table
+    # allowing a user to be associated with multiple companies and vice-versa,
+    # storing additional details (like job title) in the association table.
+    companies = models.ManyToManyField(
+        CompanyProfile,
+        through=UserCompanyAssociation, # Specify the intermediate model
+        related_name='associated_users', # How to refer to users from a company profile
+        blank=True # A user might not be associated with any company yet
+    )
+    # --- End Relationship Addition ---
 
 
     USERNAME_FIELD = "email"

@@ -3,11 +3,14 @@ import json
 import logging
 import re
 
+import time
+import random
+
 import requests
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, unquote
 from bs4 import BeautifulSoup
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from langchain.chat_models import init_chat_model
 from langgraph.prebuilt import create_react_agent
@@ -34,7 +37,7 @@ import langsmith
 
 from fartemis.companies.models import CompanyProfile, CompanyRole, UserCompanyAssociation
 from fartemis.jobboards.models import Job
-from fartemis.users.models import User, ContactMethodType, UserContactMethod
+from fartemis.users.models import User, ContactMethodType, UserContactMethod, UserSourceLink
 from fartemis.llms.clients import LLMClientFactory, LLMProvider
 
 
@@ -44,7 +47,35 @@ from langchain.agents import AgentExecutor, tool
 from .models import CompanyProfile, CompanyResearchReferences, CompanyResearchLog
 from .constants import CompanyReviewSentiment, COUNTRY_CODE_MAPPING
 
+
 logger = logging.getLogger(__name__)
+
+try:
+    from thefuzz import fuzz
+    thefuzz_available = True
+except ImportError:
+    thefuzz_available = False
+    logger.warning("The 'thefuzz' library is not installed. Company name matching will be exact. Install with: pip install thefuzz[speedup]")
+
+
+try:
+    from tavily import TavilyClient
+    # Assuming TavilyClient is the correct class as per Tavily's newer usage
+    # If you were using Langchain's TavilySearch, the import would be different.
+    # Adjust based on your actual Tavily library usage.
+    tavily_available = True
+except ImportError:
+    tavily_available = False
+    TavilyClient = None # Define as None if not available
+
+
+
+# Constants for company size
+SIZE_SMALL = 'small'
+SIZE_MEDIUM = 'medium'
+SIZE_LARGE = 'large'
+SIZE_UNKNOWN = 'unknown'
+
 
 class CompanyResearchController:
     """Controller for company research operations"""
@@ -832,553 +863,548 @@ Respond with ONLY the 2-letter code in uppercase.
 
 class LinkedInProfileFinder:
     """
-    Class for finding LinkedIn profiles for people based on name and company
+    Class for finding LinkedIn profiles for people based on name and company.
+    Uses web search (DuckDuckGo, Tavily) and page analysis to find the best match.
     """
-    
+
+    MAX_SCORE = 24.0 # Max potential score: Name URL (10) + First Name Context (3) + Last Name Context (3) + Company Context (8)
+
     def __init__(self, verbose=False):
-        """Initialize the profile finder"""
         self.verbose = verbose
-        
-        # Configure logging
-        if verbose:
-            logging.basicConfig(level=logging.INFO)
-            
+        # Logging configured elsewhere
+
+    # ... (find_profile method remains the same) ...
     def find_profile(self, first_name, last_name, company=None, search_engine='both', max_pages=5):
-        """
-        Find LinkedIn profile for a person
-        
-        Args:
-            first_name: Person's first name
-            last_name: Person's last name
-            company: Optional company name
-            search_engine: 'duckduckgo', 'tavily', or 'both'
-            max_pages: Maximum number of pages to analyze
-            
-        Returns:
-            dict: Profile information or None if not found
-        """
+        # ... (No changes needed in this method itself) ...
+        if not first_name or not last_name:
+             logger.error("First name and last name are required.")
+             return None
+
         logger.info(f"Searching for LinkedIn profile of {first_name} {last_name}")
         if company:
             logger.info(f"Associated with company: {company}")
-            
-        # Step 1: Perform search
+
+        # --- Step 1: Perform web search ---
         search_results = []
-        
         if search_engine in ['duckduckgo', 'both']:
             logger.info("Using DuckDuckGo search...")
-            duckduckgo_results = self._perform_duckduckgo_search(first_name, last_name, company)
-            search_results.extend(duckduckgo_results)
-        
+            # *** We will call the MODIFIED _perform_duckduckgo_search below ***
+            try:
+                duckduckgo_results = self._perform_duckduckgo_search(first_name, last_name, company)
+                search_results.extend(duckduckgo_results)
+                logger.info(f"Found {len(duckduckgo_results)} results via DuckDuckGo.")
+            except requests.exceptions.RequestException as e:
+                 # Handle specific request errors gracefully here if desired,
+                 # or let them propagate if _perform_duckduckgo_search re-raises.
+                 # Current _perform_duckduckgo_search handles RequestException internally.
+                 logger.error(f"DuckDuckGo search request failed (handled): {e}")
+            except Exception as e:
+                 # Catch other potential errors from DDG function if they weren't handled
+                 logger.error(f"Unexpected error during DuckDuckGo search processing: {e}", exc_info=self.verbose)
+
+
         if search_engine in ['tavily', 'both']:
-            logger.info("Using Tavily search...")
-            tavily_results = self._perform_tavily_search(first_name, last_name, company)
-            search_results.extend(tavily_results)
-            
+             if not tavily_available:
+                 logger.warning("Tavily client not available/installed. Skipping Tavily search.")
+             elif not getattr(settings, 'TAVILY_API_KEY', None):
+                 logger.warning("TAVILY_API_KEY not found in settings. Skipping Tavily search.")
+             else:
+                logger.info("Using Tavily search...")
+                try:
+                    tavily_results = self._perform_tavily_search(first_name, last_name, company)
+                    search_results.extend(tavily_results)
+                    logger.info(f"Found {len(tavily_results)} results via Tavily.")
+                except Exception as e:
+                    logger.error(f"Tavily search failed: {e}", exc_info=self.verbose)
+
         if not search_results:
-            logger.warning("No search results found")
+            logger.warning("No search results found from any engine.")
             return None
-            
-        # Step 2: Prioritize pages
+
+        # --- Step 2: Prioritize pages ---
         prioritized_pages = self._prioritize_pages(search_results, first_name, last_name, company)
-        
-        # Step 3: Analyze pages for LinkedIn profiles
-        linkedin_profiles = []
+        if not prioritized_pages:
+             logger.warning("No pages could be prioritized from search results.")
+             return None
+
+        # --- Step 3 & 4: Analyze pages and Rank (No changes needed here) ---
+        # ... (rest of find_profile method is unchanged) ...
+        potential_profiles = {}
         pages_analyzed = 0
-        
+
+        logger.info(f"Analyzing up to {max_pages} prioritized pages...")
         for page in prioritized_pages:
             if pages_analyzed >= max_pages:
+                logger.info(f"Reached max_pages limit ({max_pages}).")
                 break
-                
+
             url = page['url']
             priority = page['priority']
             reason = page['reason']
-            
-            logger.info(f"Analyzing page: {url} (Priority: {priority}, Reason: {reason})")
-            
-            # If this is already a LinkedIn profile URL, add it directly
-            if 'linkedin.com/in/' in url:
+            is_direct_profile_url = 'linkedin.com/in/' in url
+
+            logger.info(f"Analyzing page #{pages_analyzed + 1}: {url} (Priority: {priority:.1f}, Reason: {reason})")
+
+            if is_direct_profile_url:
                 profile_handle = self._extract_handle_from_url(url)
                 if profile_handle:
+                    clean_url = self._clean_profile_url(url)
                     match_score = self._calculate_profile_match_score(url, "", first_name, last_name, company)
-                    linkedin_profiles.append({
-                        'url': url,
-                        'text': f"{first_name} {last_name}",
-                        'context': f"Direct profile URL",
-                        'match': match_score
-                    })
-                    logger.info(f"Added direct profile: {url} (Match: {match_score})")
-            
-            # Fetch and parse the page
+                    if clean_url not in potential_profiles or match_score > potential_profiles[clean_url]['match']:
+                         logger.info(f"Adding/Updating direct profile: {clean_url} (Match Score: {match_score:.1f} based on URL)")
+                         potential_profiles[clean_url] = {
+                            'url': clean_url,
+                            'original_url': url,
+                            'text': f"{first_name} {last_name}",
+                            'context': "Direct profile URL from search",
+                            'match': match_score,
+                            'source_type': 'direct_url'
+                        }
+                    else:
+                         logger.debug(f"Direct profile {clean_url} already found with equal/higher score.")
+                    pages_analyzed += 1
+                    continue
+
             page_content = self._fetch_page(url)
             if not page_content:
+                pages_analyzed += 1
                 continue
-                
-            # Extract LinkedIn profiles
+
             page_profiles = self._extract_linkedin_profiles(page_content, first_name, last_name, company)
-            
             if page_profiles:
-                logger.info(f"Found {len(page_profiles)} potential LinkedIn profiles")
+                logger.info(f"Found {len(page_profiles)} potential LinkedIn profile links on page {url}")
                 for profile in page_profiles:
-                    linkedin_profiles.append(profile)
+                    clean_profile_url = self._clean_profile_url(profile['url'])
+                    if clean_profile_url not in potential_profiles or profile['match'] > potential_profiles[clean_profile_url]['match']:
+                        logger.debug(f"Adding/Updating extracted profile: {clean_profile_url} (Match Score: {profile['match']:.1f})")
+                        potential_profiles[clean_profile_url] = {
+                            **profile,
+                            'url': clean_profile_url,
+                            'original_url': profile['url'],
+                            'source_type': 'extracted'
+                        }
+                    else:
+                         logger.debug(f"Extracted profile {clean_profile_url} already found with equal/higher score.")
             else:
-                logger.info("No LinkedIn profiles found on this page")
-                
+                logger.info(f"No LinkedIn profile links found on page {url}")
             pages_analyzed += 1
-            
-        # Deduplicate and rank profiles
-        final_profiles = self._deduplicate_profiles(linkedin_profiles)
-        
-        if not final_profiles:
-            logger.warning("No LinkedIn profiles found")
+
+        if not potential_profiles:
+            logger.warning("No potential LinkedIn profiles found after analyzing pages.")
             return None
-            
-        # Get the best profile
+
+        final_profiles = self._rank_profiles(list(potential_profiles.values()))
         best_profile = final_profiles[0]
         best_handle = self._extract_handle_from_url(best_profile['url'])
-        
+
         if best_handle:
-            # Return full profile info
+            logger.info(f"Best match found: {best_profile['url']} (Handle: {best_handle}, Score: {best_profile['match']:.1f}, Confidence: {best_profile['confidence']})")
             return {
                 'handle': best_handle,
                 'url': best_profile['url'],
                 'confidence': best_profile['confidence'],
                 'match_score': best_profile['match']
             }
-        
-        return None
-    
+        else:
+             logger.error(f"Could not extract handle from the best match URL: {best_profile['url']}")
+             return None
+    # --- END of find_profile ---
 
+
+    # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    # --- MODIFIED DuckDuckGo Search Function ---
+    # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     def _perform_duckduckgo_search(self, first_name, last_name, company=None):
         """
-        Perform a web search using DuckDuckGo's modern HTML structure
+        Perform a web search using DuckDuckGo HTML results.
+        Handles network/HTTP errors but allows parsing errors to raise.
+        Uses a slightly broader query.
         """
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://duckduckgo.com/',
         }
-        
+
+        # Construct search term - Simplified: Use quotes, add "linkedin", remove site: operator
+        search_term = f'{first_name} {last_name}'
+        if company:
+            search_term += f' "{company}"'
+        search_term += ' linkedin' # Rely on keyword instead of site: operator for html version
+        encoded_query = requests.utils.quote(search_term)
+        search_url = f"https://html.duckduckgo.com/html/?q={encoded_query}&kl=us-en"
+
+        logger.debug(f"Attempting DDG Search URL: {search_url}")
+
         try:
-            # Construct search term
-            search_term = f"{first_name} {last_name}"
-            if company:
-                search_term += f" {company}"
-            search_term += " linkedin"
-            
-            # Use DuckDuckGo HTML search
-            encoded_query = search_term.replace(' ', '+')
-            search_url = f"https://duckduckgo.com/?q={encoded_query}&kl=wt-wt"
-            
-            response = requests.get(search_url, headers=headers, timeout=10)
-            response.raise_for_status()
-            
-            # Parse the search results
+            response = requests.get(search_url, headers=headers, timeout=15)
+            logger.debug(f"DDG Response Status: {response.status_code}")
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+            # --- Parsing Logic - No broad Exception suppression here ---
+            # If parsing fails below (e.g., structure change), it will raise an error.
             soup = BeautifulSoup(response.text, 'html.parser')
             results = []
-            
-            # Look for result containers
-            for result in soup.select('article'):
-                # Modern DuckDuckGo structure - find title links
-                title_link = result.select_one('h2 a, h3 a, a[data-testid="result-title-a"]')
-                
-                if title_link:
-                    title = title_link.get_text(strip=True)
-                    url = title_link.get('href', '')
-                    
-                    # Find snippet
-                    snippet_elem = result.select_one('p[data-testid="result-snippet"], .result__snippet')
-                    snippet = snippet_elem.get_text(strip=True) if snippet_elem else ""
-                    
-                    # Find URL display element
-                    url_elem = result.select_one('[data-testid="result-extras-url-link"], .result__url')
-                    if url_elem and not url:
-                        url = url_elem.get('href', '') or url_elem.get_text(strip=True)
-                    
-                    # Process links with special handling for LinkedIn URLs
-                    if url:
-                        # Clean up relative URLs
-                        if url.startswith('/'):
-                            url = f"https://duckduckgo.com{url}"
-                        
-                        results.append({
-                            'title': title,
-                            'url': url,
-                            'snippet': snippet,
-                            'source': 'duckduckgo'
-                        })
-            
-            # If we didn't find any results with the modern structure, try the alternate structure
-            if not results:
-                # Try to find links in the modern structure
-                for link in soup.select('a[data-testid="result-extras-url-link"]'):
-                    url = link.get('href')
-                    if not url:
-                        continue
-                        
-                    # Try to get title and snippet
-                    parent = link.parent.parent
-                    title_elem = parent.select_one('h2, h3')
-                    title = title_elem.get_text(strip=True) if title_elem else ""
-                    
-                    snippet_elem = parent.select_one('p')
-                    snippet = snippet_elem.get_text(strip=True) if snippet_elem else ""
-                    
-                    results.append({
-                        'title': title,
-                        'url': url,
-                        'snippet': snippet,
-                        'source': 'duckduckgo'
-                    })
-            
-            # Still no results? Try other selectors
-            if not results:
-                for link in soup.select('a[href^="https://"]'):
-                    url = link.get('href', '')
-                    
-                    # Only include external links that might be relevant
-                    if 'linkedin.com' in url or 'duckduckgo.com' not in url:
-                        title = link.get_text(strip=True)
-                        
-                        # Try to get a snippet from surrounding text
-                        parent = link.parent
-                        context = parent.get_text(strip=True) if parent else ""
-                        snippet = context.replace(title, "").strip()
-                        
-                        results.append({
-                            'title': title,
-                            'url': url,
-                            'snippet': snippet,
-                            'source': 'duckduckgo'
-                        })
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error performing DuckDuckGo search: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return []
+            raw_urls = []
 
+            result_divs = soup.find_all('div', class_='result')
+            logger.debug(f"Found {len(result_divs)} result divs in DDG HTML.")
+
+            if not result_divs:
+                logger.warning(f"DDG HTML parsing found no 'div.result' elements. HTML structure might have changed.")
+                # Optional: Log response.text for manual inspection if verbose
+                if self.verbose:
+                    # Limit logged size to avoid flooding logs
+                    log_limit = 2000
+                    logged_text = response.text[:log_limit] + ('...' if len(response.text) > log_limit else '')
+                    logger.debug(f"DDG Response Text (partial):\n{logged_text}")
+
+
+            for i, result_div in enumerate(result_divs):
+                logger.debug(f"Processing result div #{i+1}")
+                title_a = result_div.find('a', class_='result__a')
+                snippet_div = result_div.find('a', class_='result__snippet') # Note: This might be brittle, could be just text
+                url_a = result_div.find('a', class_='result__url')
+
+                # Use .select_one for potentially missing elements to avoid NoneType errors later
+                # title_a = result_div.select_one('a.result__a')
+                # snippet_div = result_div.select_one('div.result__snippet') # Snippets might be in divs now? Check HTML source
+                # url_a = result_div.select_one('a.result__url')
+
+                if title_a and url_a: # Snippet is less critical
+                    title = title_a.get_text(strip=True)
+                    href = title_a.get('href')
+                    snippet = snippet_div.get_text(strip=True) if snippet_div else "[Snippet not found]"
+                    logger.debug(f"  Raw href: {href}")
+
+                    actual_url = None
+                    if href and '/l/?uddg=' in href:
+                         try:
+                             parsed_href = urlparse(href)
+                             # Robust parameter parsing
+                             params = {}
+                             if parsed_href.query:
+                                 for qc in parsed_href.query.split('&'):
+                                     if '=' in qc:
+                                         key, val = qc.split('=', 1)
+                                         params[key] = val # Takes the last value if key repeats
+                             uddg_val = params.get('uddg')
+                             if uddg_val:
+                                actual_url = unquote(uddg_val)
+                             else:
+                                 logger.warning(f"  Found DDG redirect link but no 'uddg' param: {href}")
+                                 actual_url = href # Fallback to the redirect itself
+                         except Exception as decode_err:
+                              logger.warning(f"  Error decoding DDG redirect URL {href}: {decode_err}")
+                              actual_url = href # Fallback
+                    elif href:
+                         actual_url = urljoin(search_url, href) # Handle relative paths if any exist
+
+                    logger.debug(f"  Title: {title}")
+                    logger.debug(f"  Actual URL: {actual_url}")
+                    logger.debug(f"  Snippet: {snippet[:100]}...") # Log partial snippet
+
+                    if actual_url:
+                        # Basic filter: Check if it looks like a plausible result
+                        if 'linkedin.com' in actual_url.lower(): # Only add results pointing to LinkedIn
+                            raw_urls.append(actual_url)
+                            results.append({
+                                'title': title,
+                                'url': actual_url,
+                                'snippet': snippet,
+                                'source': 'duckduckgo'
+                            })
+                        else:
+                             logger.debug(f"  Skipping non-LinkedIn URL: {actual_url}")
+                else:
+                    logger.warning(f"  Could not find expected elements (title_a, url_a) in result div #{i+1}. Skipping.")
+                    if self.verbose:
+                         logger.debug(f"  Problematic div HTML (partial): {str(result_div)[:500]}...")
+
+
+            logger.debug(f"Raw qualifying DDG URLs found: {raw_urls}")
+            if not results and result_divs:
+                 logger.warning("Found result divs but extracted 0 valid results. Parsing logic likely needs update.")
+
+            return results
+
+        except requests.exceptions.RequestException as e:
+            # Handle network/HTTP errors specifically
+            logger.error(f"DuckDuckGo request failed: {e}")
+            # Optionally: Log error details if verbose
+            # if self.verbose:
+            #     logger.error("RequestException Details:", exc_info=True)
+            return [] # Return empty list on request failure
+        # NO broad except Exception here - let other errors (like parsing errors) raise
+
+    # --- END of MODIFIED DuckDuckGo Search Function ---
+    # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+    # ... (all other methods like _perform_tavily_search, _prioritize_pages, _calculate_name_match_in_url, etc., remain the same as the previous version) ...
     def _perform_tavily_search(self, first_name, last_name, company=None):
         """
-        Perform a web search using Tavily
+        Perform a web search using Tavily API.
+        Requires TAVILY_API_KEY in settings.
         """
+        if not tavily_available or not TavilyClient:
+             logger.error("TavilyClient not initialized.")
+             return []
+
+        api_key = getattr(settings, 'TAVILY_API_KEY', None)
+        if not api_key:
+            logger.error("TAVILY_API_KEY missing in settings.")
+            return []
+
         try:
-            # Construct search term
-            search_term = f"{first_name} {last_name}"
+            # Construct search term - keep quotes for Tavily? Test this.
+            search_term = f'"{first_name} {last_name}"'
             if company:
-                search_term += f" {company}"
-            search_term += " linkedin"
-            
-            # Initialize Tavily search tool
-            tavily_search = TavilySearch(
-                max_results=10,
-                api_key=getattr(settings, 'TAVILY_API_KEY', None)
+                search_term += f' "{company}"'
+            # Keep site:linkedin.com/in/ for Tavily as it's likely more powerful
+            search_term += ' site:linkedin.com/in/'
+
+            logger.debug(f"Tavily Search Query: {search_term}")
+            tavily = TavilyClient(api_key=api_key)
+            response = tavily.search(
+                 query=search_term,
+                 search_depth="basic",
+                 max_results=10,
+                 include_raw_content=False,
+                 include_answer=False
             )
-            
-            # Execute search
-            search_results = tavily_search.invoke(search_term)
-            
-            # Process search results
+            logger.debug(f"Tavily API Response: {response}")
+
             results = []
-            
-            # Determine format and extract results
-            if isinstance(search_results, dict) and "results" in search_results:
-                result_items = search_results["results"]
-            elif isinstance(search_results, list):
-                result_items = search_results
-            else:
-                result_items = []
-            
-            # Format results to match our expected structure
+            result_items = response.get('results', [])
             for item in result_items:
-                if isinstance(item, dict):
+                if isinstance(item, dict) and item.get('url') and 'linkedin.com/in/' in item.get('url'):
+                     # Ensure Tavily results are also profile URLs if site: was used
                     results.append({
                         'title': item.get('title', ''),
-                        'url': item.get('url', ''),
+                        'url': item.get('url'),
                         'snippet': item.get('content', ''),
                         'source': 'tavily'
                     })
-            
+                elif isinstance(item, dict) and item.get('url'):
+                     logger.debug(f"Tavily returned non /in/ URL despite site: query: {item.get('url')}")
+
+
             return results
-            
+
         except Exception as e:
-            logger.error(f"Error performing Tavily search: {e}")
+            logger.error(f"Error performing Tavily search: {e}", exc_info=self.verbose)
             return []
 
     def _prioritize_pages(self, search_results, first_name, last_name, company=None):
         """
-        Prioritize pages based on likelihood of containing LinkedIn profile links,
-        with higher priority for company association
+        Prioritize search result pages based on likelihood of containing the target LinkedIn profile.
         """
         prioritized = []
-        
-        for result in search_results:
+        num_results = len(search_results) # For rank bonus calculation
+
+        for rank, result in enumerate(search_results):
             url = result['url']
-            
-            # Add scheme if missing
-            if not url.startswith('http://') and not url.startswith('https://'):
-                url = 'https://' + url
-                
-            title = result['title']
-            snippet = result['snippet']
-            
-            # Calculate priority based on various factors
-            priority = 0
-            reason = []
-            
-            # Major boost for URLs that are already LinkedIn profile pages
-            if 'linkedin.com/in/' in url:
+            title = result.get('title', '')
+            snippet = result.get('snippet', '')
+
+            if not url or not isinstance(url, str): continue
+            try: # Add basic robustness for URL parsing
+                parsed_url = urlparse(url)
+                if not parsed_url.scheme:
+                    url = 'https://' + url
+                    parsed_url = urlparse(url) # Re-parse after adding scheme
+                if not parsed_url.netloc: # Skip if URL is fundamentally broken
+                     logger.warning(f"Skipping invalid URL in prioritization: {url}")
+                     continue
+            except ValueError as url_err:
+                 logger.warning(f"Skipping invalid URL due to parsing error: {url} ({url_err})")
+                 continue
+
+            # Optionally re-enable domain filtering if needed, but search query should handle it mostly
+            # if 'linkedin.com' not in parsed_url.netloc.lower():
+            #      logger.debug(f"Skipping non-LinkedIn URL from search results: {url}")
+            #      continue
+
+            priority = 0.0
+            reason_parts = []
+            content_lower = (title + ' ' + snippet).lower()
+            first_lower = first_name.lower()
+            last_lower = last_name.lower()
+            company_lower = company.lower() if company else None
+
+            # Base score
+            if 'linkedin.com' in parsed_url.netloc.lower():
+                 priority += 50
+                 reason_parts.append("LinkedIn Domain")
+
+            # Direct Profile URL Boost
+            is_direct_profile = '/in/' in parsed_url.path
+            if is_direct_profile:
                 priority += 200
-                reason.append("Direct LinkedIn profile URL")
-                
-                # Name in profile URL
-                name_match_score = self._calculate_name_match_in_url(url, first_name, last_name)
-                if name_match_score > 0:
-                    priority += 50 * name_match_score
-                    reason.append("Name in profile URL")
-                
-                # Company in profile URL
-                if company and company.lower().replace(' ', '') in url.lower():
-                    priority += 100
-                    reason.append(f"{company} in profile URL")
-            
-            # Good boost for LinkedIn post URLs that mention the company
-            elif 'linkedin.com/posts/' in url and company:
-                priority += 150
-                reason.append("LinkedIn post URL")
-                
-                # Check if company is in the URL
-                if company.lower().replace(' ', '') in url.lower():
-                    priority += 50
-                    reason.append(f"{company} in post URL")
-            
-            # General boost for any LinkedIn domain
-            elif 'linkedin.com' in url:
-                priority += 100
-                reason.append("LinkedIn domain")
-            
-            # Check title and snippet for keywords
-            content = (title + ' ' + snippet).lower()
-            
-            # Check for name in content
-            if first_name.lower() in content and last_name.lower() in content:
-                priority += 20
-                reason.append("Full name in content")
-                
-            # Check for company association - major priority boost
-            if company and company.lower() in content:
-                priority += 100
-                reason.append(f"Associated with {company}")
-                
-            # Check for LinkedIn mentions
-            if 'linkedin' in content:
-                priority += 10
-                reason.append("LinkedIn mentioned")
-                
-            # Check for profile-related terms
-            if any(term in content for term in ['profile', 'cv', 'resume', 'professional']):
+                reason_parts.append("Direct Profile URL")
+                name_url_score = self._calculate_name_match_in_url(url, first_name, last_name)
+                if name_url_score > 0:
+                    priority += 75 * name_url_score
+                    reason_parts.append(f"Name Match in URL ({name_url_score:.2f})")
+
+            # Company association
+            if company_lower:
+                 if company_lower.replace(' ', '') in url.lower().replace('-', ''):
+                      priority += 70
+                      reason_parts.append("Company in URL")
+                 if company_lower in content_lower:
+                      priority += 100
+                      reason_parts.append(f"Company in Content")
+
+            # Name association in title/snippet
+            name_in_content = first_lower in content_lower and last_lower in content_lower
+            if name_in_content:
+                priority += 30
+                reason_parts.append("Full Name in Content")
+            elif first_lower in content_lower or last_lower in content_lower:
+                 priority += 10
+                 reason_parts.append("Partial Name in Content")
+
+            # Profile-related terms
+            if any(term in content_lower for term in ['profile', 'résumé', 'professional', 'connect']):
                 priority += 5
-                reason.append("Profile-related terms")
-            
-            prioritized.append({
-                'url': url,
-                'title': title,
-                'snippet': snippet,
-                'priority': priority,
-                'reason': ', '.join(reason),
-                'source': result.get('source', 'unknown')
-            })
-        
-        # Sort by priority (highest first)
+                reason_parts.append("Profile Terms")
+
+            # Search rank bonus
+            if num_results > 0:
+                 rank_bonus = max(0, (num_results - rank) / num_results) * 5
+                 priority += rank_bonus
+
+            if priority > 0:
+                prioritized.append({
+                    'url': url,
+                    'title': title,
+                    'snippet': snippet,
+                    'priority': priority,
+                    'reason': ', '.join(reason_parts) if reason_parts else 'Base Score',
+                    'source': result.get('source', 'unknown')
+                })
+            else:
+                 logger.debug(f"Skipping result with zero priority: {url}")
+
         return sorted(prioritized, key=lambda x: x['priority'], reverse=True)
 
+
     def _calculate_name_match_in_url(self, url, first_name, last_name):
-        """
-        Calculate how well a name matches a URL
-        Returns a score between 0 and 1
-        """
-        url_lower = url.lower()
+        handle = self._extract_handle_from_url(url)
+        if not handle: return 0.0
+        handle_lower = handle.lower()
         first_lower = first_name.lower()
         last_lower = last_name.lower()
-        
-        # Extract handle from linkedin.com/in/handle
-        handle = self._extract_handle_from_url(url)
-        if not handle:
-            return 0
-        
-        handle_lower = handle.lower()
-        score = 0
-        
-        # Check for exact matches
-        if handle_lower == f"{first_lower}{last_lower}" or handle_lower == f"{last_lower}{first_lower}":
-            return 1.0
-        
-        # Check for variations
-        variations = [
-            f"{first_lower}.{last_lower}",
-            f"{first_lower}-{last_lower}",
-            f"{first_lower}_{last_lower}",
-            f"iam{first_lower}{last_lower}",
-            f"i.am.{first_lower}.{last_lower}",
-            f"{first_lower[0]}{last_lower}",
-            f"{first_lower}{last_lower[0]}"
-        ]
-        
-        for variation in variations:
-            if variation in handle_lower:
-                score = 0.8
-                break
-        
-        # Partial matches
-        if score == 0:
-            if first_lower in handle_lower and last_lower in handle_lower:
-                score = 0.7
-            elif first_lower in handle_lower or last_lower in handle_lower:
-                score = 0.5
-        
+        score = 0.0
+        handle_alpha = ''.join(filter(str.isalpha, handle_lower))
+        first_last_dash = f"{first_lower}-{last_lower}"
+        last_first_dash = f"{last_lower}-{first_lower}"
+        first_last_concat = f"{first_lower}{last_lower}"
+        last_first_concat = f"{last_lower}{first_lower}"
+
+        if handle_lower == first_last_dash: return 1.0
+        if handle_lower == last_first_dash: return 0.95
+        if handle_lower == first_last_concat or handle_lower == last_first_concat: return 0.9
+        if f"{first_lower}-{last_lower[0]}" in handle_lower or f"{first_lower[0]}-{last_lower}" in handle_lower: score = max(score, 0.85)
+        if f"{first_lower}.{last_lower}" in handle_lower or f"{first_lower}_{last_lower}" in handle_lower: score = max(score, 0.8)
+        if score == 0 and first_lower in handle_lower and last_lower in handle_lower:
+             if handle_alpha == first_last_concat or handle_alpha == last_first_concat: score = 0.75
+             else: score = 0.65
+        if score == 0 and (first_lower in handle_lower or last_lower in handle_lower): score = 0.4
         return score
+
+    def _clean_profile_url(self, url):
+         if not url or '/in/' not in url: return url
+         try:
+              base = url.split('/in/')[0] + '/in/'
+              handle_part = url.split('/in/')[1]
+              clean_handle = handle_part.split('?')[0].split('/')[0].rstrip('/')
+              return base + clean_handle
+         except IndexError: return url
 
     def _extract_handle_from_url(self, url):
-        """Extract just the handle part from a LinkedIn profile URL"""
-        if '/in/' not in url:
+        if not url or '/in/' not in url: return None
+        try:
+            after_in = url.split('/in/')[1]
+            handle = after_in.split('?')[0].split('/')[0].rstrip('/')
+            return handle
+        except IndexError:
+            logger.debug(f"Could not extract handle from URL: {url}")
             return None
-            
-        # Split at /in/ and take everything after
-        after_in = url.split('/in/')[1]
-        
-        # Remove URL parameters and trailing slashes
-        handle = after_in.split('?')[0].split('/')[0].rstrip('/')
-        
-        return handle
 
     def _fetch_page(self, url):
-        """
-        Fetch and parse a webpage
-        """
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5','Referer': 'https://www.google.com/','DNT': '1','Upgrade-Insecure-Requests': '1'
         }
-        
         try:
-            # Add scheme if missing
-            if not url.startswith('http://') and not url.startswith('https://'):
-                url = 'https://' + url
-            
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers, timeout=12, allow_redirects=True)
             response.raise_for_status()
+            content_type = response.headers.get('content-type', '').lower()
+            if 'html' not in content_type:
+                logger.warning(f"Skipping non-HTML content at {url} (Content-Type: {content_type})")
+                return None
+            if "captcha" in response.text.lower() or "sign in" in response.text.lower():
+                 logger.warning(f"Possible CAPTCHA or login page detected at {url}")
             return response.text
-        except Exception as e:
-            logger.error(f"Error fetching page {url}: {e}")
-            return None
+        except requests.exceptions.Timeout: logger.warning(f"Timeout fetching page {url}"); return None
+        except requests.exceptions.TooManyRedirects: logger.warning(f"Too many redirects fetching page {url}"); return None
+        except requests.exceptions.RequestException as e: logger.error(f"Error fetching page {url}: {e}"); return None
+        except Exception as e: logger.error(f"Unexpected error fetching page {url}: {e}", exc_info=self.verbose); return None
 
     def _calculate_profile_match_score(self, url, context, first_name, last_name, company=None):
-        """Calculate a match score for a LinkedIn profile"""
-        score = 0
-        
-        # Name matching in URL
+        score = 0.0
+        url = self._clean_profile_url(url)
         name_url_score = self._calculate_name_match_in_url(url, first_name, last_name)
-        score += name_url_score * 10  # Scale up to our scoring range
-        
-        # Context matching
-        context_lower = context.lower()
-        if first_name.lower() in context_lower:
-            score += 3
-        
-        if last_name.lower() in context_lower:
-            score += 3
-        
-        # Company association
-        if company and company.lower() in context_lower:
-            score += 5
-            
-        # Special score boost for handles that look like "iamstevenscott"
-        handle = self._extract_handle_from_url(url)
-        if handle and handle.lower() == f"iam{first_name.lower()}{last_name.lower()}":
-            score += 10
-        
-        return score
+        score += name_url_score * 10.0
+        context_lower = context.lower() if context else ""
+        if context_lower:
+            if first_name.lower() in context_lower: score += 3.0
+            if last_name.lower() in context_lower: score += 3.0
+        if company and context_lower and company.lower() in context_lower: score += 8.0
+        return min(score, self.MAX_SCORE)
 
     def _extract_linkedin_profiles(self, page_content, first_name, last_name, company=None):
-        """
-        Extract LinkedIn profile links from a page, with company association consideration
-        """
         soup = BeautifulSoup(page_content, 'html.parser')
-        linkedin_profiles = []
-        
-        # Look for all links
-        for link in soup.find_all('a'):
-            href = link.get('href', '')
-            
-            # Check if it's a LinkedIn profile link
-            if 'linkedin.com/in/' in href:
-                # Add scheme if missing
-                if not href.startswith('http://') and not href.startswith('https://'):
-                    href = 'https://' + href
-                    
-                # Extract the text of the link and surrounding context
+        found_profiles = []
+        links = soup.find_all('a', href=True)
+        for link in links:
+            href = link['href']
+            parsed_href = urlparse(href)
+            if 'linkedin.com' in parsed_href.netloc.lower() and '/in/' in parsed_href.path:
+                clean_url = self._clean_profile_url(href)
+                if not self._extract_handle_from_url(clean_url): continue
                 link_text = link.get_text(strip=True)
-                
-                # Try to get some surrounding context (parent paragraph or div)
-                parent = link.parent
-                context = parent.get_text(strip=True) if parent else ""
-                
-                # Calculate match score
-                match_score = self._calculate_profile_match_score(href, context, first_name, last_name, company)
-                
-                # Add this profile
-                linkedin_profiles.append({
-                    'url': href,
-                    'text': link_text,
-                    'context': context,
-                    'match': match_score
-                })
-        
-        # Sort by match score (highest first)
-        return sorted(linkedin_profiles, key=lambda x: x['match'], reverse=True)
+                parent = link.parent; parent_text = ""; tries = 0
+                while parent and tries < 3:
+                     parent_text = parent.get_text(separator=' ', strip=True)
+                     if len(parent_text) > 50: break
+                     parent = parent.parent; tries += 1
+                context = (link_text + ' ' + parent_text)[:500]
+                match_score = self._calculate_profile_match_score(clean_url, context, first_name, last_name, company)
+                if match_score > 0:
+                    found_profiles.append({'url': clean_url, 'text': link_text, 'context': context, 'match': match_score})
+        return found_profiles
 
-    def _deduplicate_profiles(self, profiles):
-        """
-        Deduplicate and rank the final list of profiles
-        """
-        unique_profiles = {}
-        
-        for profile in profiles:
-            url = profile['url']
-            
-            # Extract the base profile URL without parameters
-            clean_url = url.split('?')[0].rstrip('/')
-            
-            if clean_url in unique_profiles:
-                # Update match score if this instance has a higher score
-                if profile['match'] > unique_profiles[clean_url]['match']:
-                    unique_profiles[clean_url] = profile
-            else:
-                unique_profiles[clean_url] = profile
-        
-        # Calculate confidence score
-        final_profiles = []
-        for profile in unique_profiles.values():
-            # Scale match score to confidence percentage (max match is 20 with all bonuses)
-            confidence = min(1.0, profile['match'] / 20.0)
+    def _rank_profiles(self, profiles_list):
+        if not profiles_list: return []
+        for profile in profiles_list:
+            confidence = min(1.0, profile.get('match', 0) / self.MAX_SCORE)
             profile['confidence'] = f"{int(confidence * 100)}%"
-            final_profiles.append(profile)
-        
-        # Sort by match score (highest first)
-        return sorted(final_profiles, key=lambda x: x['match'], reverse=True)
-
-    def _extract_best_handle(self, profiles):
-        """
-        Extract the LinkedIn handle from the highest confidence profile
-        """
-        if not profiles:
-            return None
-            
-        # Get the highest confidence profile
-        best_profile = profiles[0]
-        
-        # Extract handle from URL
-        url = best_profile['url']
-        
-        return self._extract_handle_from_url(url)
+        ranked_profiles = sorted(
+            profiles_list,
+            key=lambda p: (p.get('match', 0), p.get('source_type') == 'direct_url', -len(p.get('url', ''))),
+            reverse=True
+        )
+        logger.debug("--- Ranked Profiles ---")
+        for i, p in enumerate(ranked_profiles[:5]):
+             logger.debug(f"{i+1}. Score: {p.get('match', 0):.1f}, Conf: {p.get('confidence', 'N/A')}, Source: {p.get('source_type', 'N/A')}, URL: {p.get('url', 'N/A')}")
+        logger.debug("---------------------")
+        return ranked_profiles
     
     
 
@@ -1387,699 +1413,610 @@ class LinkedInProfileFinder:
 ## MAIN CONTROLLER CLASS ##
 ##############################
 class EmployeeResearchController:
-    """Controller for researching employees/contacts at companies"""
+    """
+    Controller for researching employees/contacts at companies using web search
+    and direct LinkedIn profile fetching.
+    """
+
+    # Define company size thresholds
+    SIZE_THRESHOLDS = {
+        SIZE_SMALL: 50,
+        SIZE_MEDIUM: 200,
+        SIZE_LARGE: float('inf') # Represents > 200
+    }
+
+    # Define target keywords mapped to roles and influence
+    # Keys are role names (for internal use), values are tuples:
+    # (CompanyRole object, list_of_keywords, default_influence)
+    TARGET_ROLES_BASE = {
+        'executive': (None, ['CEO', 'Chief Executive Officer', 'Founder', 'CTO', 'Chief Technology Officer', 'CFO', 'Chief Financial Officer', 'COO', 'Chief Operating Officer', 'President'], 10),
+        'recruiter': (None, ['Recruiter', 'Talent Acquisition', 'Sourcer', 'Human Resources', 'HR', 'People Operations', 'People Partner', 'Talent Partner'], 7),
+        'hiring_manager': (None, ['Manager', 'Director', 'Head of', 'VP', 'Vice President', 'Lead'], 8),
+        # Add more roles as needed
+    }
+
     
-    def __init__(self, company_profile: CompanyProfile, job_id: int = None):
-        """Initialize the controller with a company profile and optional job ID"""
+    def __init__(self, company_profile: CompanyProfile, linkedin_api_client, job_id: int = None, verbose=False):
+        """
+        Initialize the controller.
+
+        Args:
+            company_profile: The CompanyProfile object to research.
+            linkedin_api_client: An authenticated instance of the linkedin_api client.
+            job_id: Optional ID of the specific job to provide context.
+            verbose: Boolean for verbose logging output.
+        """
+        if not isinstance(company_profile, CompanyProfile):
+            raise TypeError("company_profile must be an instance of CompanyProfile")
+        if not linkedin_api_client:
+             raise ValueError("linkedin_api_client is required")
+
         self.company = company_profile
+        self.linkedin_api = linkedin_api_client # Use the passed-in authenticated client
         self.job = None
-        
-        
+        self.verbose = verbose
+        self.profile_finder = LinkedInProfileFinder(verbose=self.verbose) # For web searches
+
         if job_id:
             try:
-                self.job = Job.objects.get(id=job_id)
-            except Job.DoesNotExist:
-                logger.warning(f"Job with ID {job_id} not found")
-        
-        self.linkedin_finder = LinkedInProfileFinder(verbose=False)
+                self.job = Job.objects.select_related('company_profile').get(id=job_id)
+                # Ensure the job's company matches the controller's company
+                if self.job.company_profile and self.job.company_profile.id != self.company.id:
+                     logger.warning(f"Job {job_id}'s company ({self.job.company_profile.name}) differs from controller's company ({self.company.name}). Proceeding with controller's company.")
+                elif not self.job.company_profile and self.job.company_name != self.company.name:
+                     logger.warning(f"Job {job_id}'s company name ({self.job.company_name}) differs from controller's company ({self.company.name}). Proceeding with controller's company.")
 
-        # Initialize LLM
-        self.llm = ChatAnthropic(
-            model_name="claude-3-haiku-20240307",
-            temperature=0.2,
-            anthropic_api_key=settings.ANTHROPIC_API_KEY
-        )
-        
-        # Initialize search tool
-        self.tavily_search_tool = TavilySearch(
-            max_results=10,
-            topic="general",
-            search_depth="advanced",
-        )
-        
-        # Create a list of tools
-        tools = [self.tavily_search_tool]
-        
-        # Convert tools to OpenAI functions using the recommended method
-        functions = [convert_to_openai_function(t) for t in tools]
-        
-        # Create prompt
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert researcher focused on finding information about companies and their employees.
-            You are thorough, precise, and always cite your sources.
-            """),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
-        
-        # Create the agent
-        agent = (
-            {
-                "input": lambda x: x["input"],
-                "chat_history": lambda x: x.get("chat_history", []),
-                "agent_scratchpad": lambda x: format_to_openai_function_messages(x["intermediate_steps"])
-            }
-            | prompt
-            | self.llm.bind(functions=functions)
-            | OpenAIFunctionsAgentOutputParser()
-        )
-        
-        # Create the agent executor
-        self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent,
-            tools=tools,
-            verbose=True
-        )
-        
-        # Initialize company roles
+            except Job.DoesNotExist:
+                logger.warning(f"Job with ID {job_id} not found for context.")
+
+        # Initialize CompanyRole objects lazily or here
         self._init_company_roles()
+        # Update TARGET_ROLES_BASE with actual role objects
+        for role_key, (role_obj, keywords, influence) in self.TARGET_ROLES_BASE.items():
+             role_attr_name = f"{role_key}_role"
+             if hasattr(self, role_attr_name):
+                  self.TARGET_ROLES_BASE[role_key] = (getattr(self, role_attr_name), keywords, influence)
+
     
     def _init_company_roles(self):
-        """Initialize company roles"""
-        self.hiring_manager_role, _ = CompanyRole.objects.get_or_create(
-            name="Hiring Manager",
-            defaults={"description": "Person responsible for making hiring decisions"}
-        )
-        
-        self.recruiter_role, _ = CompanyRole.objects.get_or_create(
-            name="Recruiter",
-            defaults={"description": "Person responsible for recruiting candidates"}
-        )
-        
-        self.engineering_lead_role, _ = CompanyRole.objects.get_or_create(
-            name="Engineering Lead",
-            defaults={"description": "Technical leader who may influence hiring decisions"}
-        )
-        
-        self.executive_role, _ = CompanyRole.objects.get_or_create(
-            name="Executive",
-            defaults={"description": "C-level or executive who may influence hiring strategy"}
-        )
+        """Initialize company role objects, fetching or creating them."""
+        # Fetch roles defined in TARGET_ROLES_BASE keys if specific roles are desired
+        self.executive_role, _ = CompanyRole.objects.get_or_create(name="Executive", defaults={"description": "C-level or executive leadership."})
+        self.recruiter_role, _ = CompanyRole.objects.get_or_create(name="Recruiter", defaults={"description": "Recruiter, Talent Acquisition, HR involved in hiring."})
+        self.hiring_manager_role, _ = CompanyRole.objects.get_or_create(name="Hiring Manager", defaults={"description": "Manager, Director, VP, or Lead likely responsible for hiring."})
+        # Add other roles if needed based on TARGET_ROLES_BASE or specific logic
+        # self.engineering_lead_role, _ = CompanyRole.objects.get_or_create(...)
+
+    def _get_company_size_category(self) -> str:
+        """Determine company size category based on employee count."""
+        count = self.company.employee_count_max or self.company.employee_count_min
+        if count is None:
+            logger.warning(f"Company size unknown for {self.company.name}. Defaulting to '{SIZE_MEDIUM}' strategy.")
+            return SIZE_MEDIUM # Default strategy for unknown size
+
+        if count <= self.SIZE_THRESHOLDS[SIZE_SMALL]:
+            return SIZE_SMALL
+        elif count <= self.SIZE_THRESHOLDS[SIZE_MEDIUM]:
+            return SIZE_MEDIUM
+        else:
+            return SIZE_LARGE
+
+
+    def _get_target_role_keywords(self, size_category: str) -> Dict[str, Tuple[CompanyRole, List[str], int]]:
+        """Get the relevant role keywords and info based on company size."""
+        targets = {}
+        base_targets = self.TARGET_ROLES_BASE
+
+        if size_category == SIZE_SMALL:
+            targets['executive'] = base_targets['executive']
+            targets['recruiter'] = base_targets['recruiter'] # HR/Recruiters exist in small companies too
+            targets['hiring_manager'] = base_targets['hiring_manager']
+        elif size_category == SIZE_MEDIUM:
+            targets['recruiter'] = base_targets['recruiter']
+            targets['hiring_manager'] = base_targets['hiring_manager']
+            # Maybe add specific VPs if job context allows? (Future enhancement)
+        elif size_category == SIZE_LARGE:
+            targets['recruiter'] = base_targets['recruiter'] # Focus heavily here
+            # Maybe refine hiring manager search (e.g., only Director+)?
+            targets['hiring_manager'] = base_targets['hiring_manager']
+        else: # Unknown size - take a mixed approach
+             targets['recruiter'] = base_targets['recruiter']
+             targets['hiring_manager'] = base_targets['hiring_manager']
+
+        logger.info(f"Targeting roles for {size_category} company: {list(targets.keys())}")
+        return targets
     
+
+
+    def _search_for_role_profiles(self, role_keywords: List[str]) -> List[str]:
+        """Perform web search to find LinkedIn profile URLs for given roles at the company."""
+        found_urls = set()
+        max_search_results_per_keyword = 5 # Limit search results per keyword
+
+        for keyword in role_keywords:
+            query = f'"{keyword}" "{self.company.name}" site:linkedin.com/in/'
+            logger.info(f"Web searching for: {query}")
+            try:
+                 # Using the LinkedInProfileFinder's search method directly
+                 # We need access to the raw search results list, not just the best profile
+                 # Let's modify LinkedInProfileFinder slightly or use Tavily directly
+
+                 # --- Option: Using Tavily directly (if available) ---
+                 if tavily_available:
+                     tavily_client = TavilyClient(api_key=settings.TAVILY_API_KEY)
+                     search_response = tavily_client.search(query=query, search_depth="basic", max_results=max_search_results_per_keyword)
+                     search_results = search_response.get('results', [])
+                 else:
+                 # --- Option: Modify LinkedInProfileFinder._perform_duckduckgo_search (or add a new method) ---
+                 # This requires adjusting LinkedInProfileFinder to return the raw list
+                 # For now, let's assume Tavily or skip this keyword if no search tool
+                     logger.warning("No search tool available (Tavily needed). Skipping web search for keyword.")
+                     search_results = []
+
+
+                 for result in search_results:
+                     url = result.get('url')
+                     if url and 'linkedin.com/in/' in url:
+                         clean_url = self.profile_finder._clean_profile_url(url) # Use helper
+                         if clean_url:
+                             found_urls.add(clean_url)
+
+                 # Add a small delay between keyword searches
+                 time.sleep(random.uniform(0.5, 1.5))
+
+            except Exception as e:
+                logger.error(f"Error during web search for keyword '{keyword}': {e}", exc_info=self.verbose)
+
+        logger.info(f"Found {len(found_urls)} potential unique profile URLs for roles: {role_keywords}")
+        return list(found_urls)
+
+
+
+    def _fetch_linkedin_profile(self, profile_url: str) -> Optional[Dict]:
+        """Fetch structured data for a given LinkedIn profile URL using linkedin-api."""
+        if not profile_url:
+            return None
+        logger.debug(f"Fetching profile details for: {profile_url}")
+        try:
+            # Extract public ID or URN if needed by get_profile
+            profile_id = self.profile_finder._extract_handle_from_url(profile_url) # Or extract URN if possible/needed
+            if not profile_id:
+                 logger.warning(f"Could not extract profile ID from URL: {profile_url}")
+                 return None
+
+            # Call the authenticated API client's get_profile method
+            # NOTE: Ensure get_profile accepts the public ID/handle. Some versions might require the URN.
+            # Check the library's implementation.
+            profile_data = self.linkedin_api.get_profile(profile_id) # Or get_profile(urn=...)
+
+            if not profile_data:
+                 logger.warning(f"No profile data returned for ID: {profile_id}")
+                 return None
+
+            # Add the URL back for reference, as get_profile might not return it
+            profile_data['linkedin_profile_url'] = profile_url
+            return profile_data
+
+        except Exception as e:
+            # Handle common errors like profile not found, rate limits, etc.
+            logger.error(f"Error fetching profile {profile_url}: {e}", exc_info=False) # Keep log concise
+            return None
+
+
+    def _validate_profile_against_target(self, profile_data: Dict, target_keywords: List[str]) -> Optional[Dict]:
+        """Validate fetched profile data against the company and target role keywords."""
+        if not profile_data:
+            return None
+
+        current_experience = profile_data.get('experience', [])
+        if not current_experience:
+            logger.debug(f"Profile {profile_data.get('linkedin_profile_url')} has no 'experience' section. Skipping.")
+            return None
+
+        # --- 1. Validate Company Name ---
+        # Get the company name from the *most recent* experience entry
+        latest_experience = current_experience[0] # Assuming list is ordered chronologically
+        profile_company_name = latest_experience.get('companyName')
+
+        if not profile_company_name:
+             logger.debug(f"Profile {profile_data.get('linkedin_profile_url')} latest experience has no company name. Skipping.")
+             return None
+
+        # Compare profile company name with target company name
+        target_company_name = self.company.name
+        match_ratio = 0
+        if thefuzz_available:
+            # Use fuzzy matching (adjust ratio threshold as needed)
+            match_ratio = fuzz.token_set_ratio(target_company_name.lower(), profile_company_name.lower())
+            company_match = match_ratio > 80 # Example threshold
+        else:
+            # Exact match (case-insensitive) if fuzzy matching not available
+             company_match = target_company_name.lower() == profile_company_name.lower()
+
+        if not company_match:
+            logger.info(f"Profile company '{profile_company_name}' does not sufficiently match target '{target_company_name}' (Ratio: {match_ratio}). Skipping {profile_data.get('linkedin_profile_url')}.")
+            return None
+        else:
+             logger.debug(f"Company name match successful for {profile_data.get('linkedin_profile_url')} (Ratio: {match_ratio})")
+
+
+        # --- 2. Validate Job Title ---
+        profile_job_title = latest_experience.get('title')
+        if not profile_job_title:
+            logger.debug(f"Profile {profile_data.get('linkedin_profile_url')} latest experience has no job title. Skipping.")
+            return None
+
+        title_lower = profile_job_title.lower()
+        title_match = any(keyword.lower() in title_lower for keyword in target_keywords)
+
+        if not title_match:
+            logger.info(f"Profile title '{profile_job_title}' does not contain target keywords {target_keywords}. Skipping {profile_data.get('linkedin_profile_url')}.")
+            return None
+        else:
+             logger.debug(f"Job title match successful for {profile_data.get('linkedin_profile_url')}")
+
+
+        # --- 3. Extract Basic Info ---
+        first_name = profile_data.get('firstName')
+        last_name = profile_data.get('lastName')
+        linkedin_urn = profile_data.get('entityUrn') # Often looks like 'urn:li:profile:...'
+        public_id = profile_data.get('publicIdentifier') # The part used in the URL
+
+        if not first_name or not last_name:
+             logger.warning(f"Profile {profile_data.get('linkedin_profile_url')} missing first or last name. Skipping.")
+             return None
+
+        # --- If all checks pass, return structured data ---
+        validated_data = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "job_title": profile_job_title, # Use the title from the profile
+            "company_name": profile_company_name, # Use the company name from the profile
+            "linkedin_url": profile_data.get('linkedin_profile_url'), # The URL we used to fetch
+            "linkedin_urn": linkedin_urn,
+            "linkedin_public_id": public_id,
+            "profile_summary": profile_data.get('summary', ''), # Optional
+        }
+        return validated_data
+
+    
+    # --- Main Execution Method ---
     def find_company_employees(self) -> List[User]:
-        """Main method to find employees at the company"""
-        found_employees = []
-        
-        # 1. Research company leadership
-        leadership_employees = self._find_company_leadership()
-        found_employees.extend(leadership_employees)
-        
-        # 2. Research hiring managers and recruiters
-        hiring_employees = self._find_hiring_team()
-        found_employees.extend(hiring_employees)
-        
-        # 3. If we have a specific job, focus on that department
-        if self.job:
-            job_employees = self._find_employees_for_job()
-            found_employees.extend(job_employees)
-        
-        # Create or update users
-        user_objects = self._create_or_update_users(found_employees)
-        
+        """Main method to find and process employees."""
+        start_time = timezone.now()
+        logger.info(f"Starting employee research for company: {self.company.name} (ID: {self.company.id})")
+
+        size_category = self._get_company_size_category()
+        target_roles_info = self._get_target_role_keywords(size_category)
+
+        all_potential_urls = set()
+        structured_employee_data = [] # Store validated data before creating users
+
+        # Search for each target role type
+        for role_key, (role_obj, keywords, influence) in target_roles_info.items():
+            logger.info(f"Searching for role type: {role_key} (Keywords: {keywords})")
+            profile_urls = self._search_for_role_profiles(keywords)
+            all_potential_urls.update(profile_urls)
+
+        if not all_potential_urls:
+            logger.warning("No potential LinkedIn profile URLs found via web search.")
+            return []
+
+        logger.info(f"Found {len(all_potential_urls)} unique potential profile URLs to investigate.")
+
+        processed_urls = 0
+        # Fetch and validate profiles
+        for profile_url in all_potential_urls:
+            # Optional: Add delay between profile fetches
+            time.sleep(random.uniform(1.0, 3.0))
+
+            profile_data = self._fetch_linkedin_profile(profile_url)
+            processed_urls += 1
+
+            if profile_data:
+                # Validate against the company and *any* of the keywords we searched for initially
+                # (A recruiter search might yield a VP of Talent, which is still relevant)
+                all_target_keywords = [kw for _, keywords, _ in target_roles_info.values() for kw in keywords]
+                validated_data = self._validate_profile_against_target(profile_data, all_target_keywords)
+
+                if validated_data:
+                    # Map the validated title to a specific role and influence
+                    mapped_role, influence_score = self._map_title_to_company_role(validated_data['job_title'])
+                    validated_data['mapped_role'] = mapped_role
+                    validated_data['influence_score'] = influence_score
+                    validated_data['source'] = f"linkedin_profile_fetch" # Mark source
+                    structured_employee_data.append(validated_data)
+                    logger.info(f"Validated contact: {validated_data['first_name']} {validated_data['last_name']} ({validated_data['job_title']})")
+
+
+            if processed_urls % 10 == 0:
+                 logger.info(f"Processed {processed_urls}/{len(all_potential_urls)} profile URLs...")
+
+        if not structured_employee_data:
+             logger.warning(f"No validated employee profiles found for {self.company.name}.")
+             return []
+
+        logger.info(f"Found {len(structured_employee_data)} validated contacts. Proceeding to create/update database records.")
+
+        # Deduplicate and Create/Update Users and Associations
+        user_objects = self._create_or_update_users(structured_employee_data)
+
+        end_time = timezone.now()
+        duration = (end_time - start_time).total_seconds()
+        logger.info(f"Employee research for {self.company.name} completed in {duration:.2f} seconds. Created/Updated {len(user_objects)} user records.")
+
         return user_objects
-    
-    def _find_company_leadership(self) -> List[Dict]:
-        """Find company leadership team members using web search"""
-        query = f"""
-        Who are the specific individuals on the leadership team at {self.company.name}?
-        
-        I need the names and titles of actual people, such as:
-        - The CEO (full name)
-        - The CTO (full name)
-        - Other executive team members (with their full names)
-        
-        Important: Only list actual people with their first and last names. Don't include generic role descriptions without names.
-        """
-        
-        try:
-            result = self.agent_executor.run(query)
-            return self._extract_employees_from_text(result)
-        except Exception as e:
-            logger.error(f"Error searching for leadership: {str(e)}")
-            return []
-    
-    def _find_hiring_team(self) -> List[Dict]:
-        """Find hiring managers and recruiters"""
-        query = f"Who are the recruiters and hiring managers at {self.company.name}? Look for people in HR, talent acquisition, and recruiting."
-        
-        try:
-            result = self.agent_executor.run(query)
-            employees = self._extract_employees_from_text(result)
-            
-            # Add role based on title
-            for emp in employees:
-                title = emp.get("job_title", "").lower()
-                
-                if any(keyword in title for keyword in ["recruit", "talent", "hr", "people"]):
-                    emp["role"] = self.recruiter_role
-                    emp["influence_level"] = 7
-                else:
-                    emp["role"] = self.hiring_manager_role
-                    emp["influence_level"] = 8
-            
-            return employees
-        except Exception as e:
-            logger.error(f"Error searching for hiring team: {str(e)}")
-            return []
-    
-    def _find_employees_for_job(self) -> List[Dict]:
-        """Find employees related to a specific job"""
-        if not self.job:
-            return []
-        
-        query = f"""Who would be the hiring manager for this job at {self.company.name}?
-        Job title: {self.job.title}
-        Job description: {self.job.description[:500]}...
-        """
-        
-        try:
-            result = self.agent_executor.run(query)
-            employees = self._extract_employees_from_text(result)
-            
-            # Also extract from job description
-            description_employees = self._extract_employees_from_job_description(self.job)
-            employees.extend(description_employees)
-            
-            # Add role and source
-            for emp in employees:
-                title = emp.get("job_title", "").lower()
-                
-                if any(keyword in title for keyword in ["manager", "director", "head"]):
-                    emp["role"] = self.hiring_manager_role
-                    emp["influence_level"] = 9
-                elif any(keyword in title for keyword in ["lead", "senior"]):
-                    emp["role"] = self.engineering_lead_role
-                    emp["influence_level"] = 7
-                
-                # Set source if not already set
-                if "source" not in emp:
-                    emp["source"] = f"job_specific_search_{self.job.id}"
-            
-            return employees
-        except Exception as e:
-            logger.error(f"Error searching for job-specific employees: {str(e)}")
-            return []
-    
-    def _extract_employees_from_text(self, text: str) -> List[Dict]:
-        """Extract employee information from text with improved filtering"""
-        employees = []
-        
-        # More precise name with title pattern
-        name_with_title_pattern = r'([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)(?:\s*[-–—:,]\s*|\s+is\s+|\s+as\s+)(?:the\s+)?([^,.]+?(?:Manager|Director|Lead|Head|Officer|CEO|CTO|CFO|COO|Engineer|Developer|Designer|Recruiter|Product|Marketing|Sales|VP|Vice President|President|Chief)(?:[^,.]{0,30}?))'
-        
-        matches = re.findall(name_with_title_pattern, text)
-        for match in matches:
-            name, title = match
-            name_parts = name.strip().split(" ", 1)
-            
-            if len(name_parts) >= 2:
-                # Skip common false positives
-                if self._is_valid_name(name):
-                    employee = {
-                        "first_name": name_parts[0].strip(),
-                        "last_name": name_parts[1].strip(),
-                        "job_title": title.strip(),
-                        "confidence_score": 0.7
-                    }
-                    employees.append(employee)
-        
-        # Extract clearly stated roles with names
-        role_name_patterns = [
-            r'(?:CEO|Chief Executive Officer)(?:[^,.]{0,10}?)(?:is|:)?\s+([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)',
-            r'(?:CTO|Chief Technology Officer)(?:[^,.]{0,10}?)(?:is|:)?\s+([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)',
-            r'(?:CFO|Chief Financial Officer)(?:[^,.]{0,10}?)(?:is|:)?\s+([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)',
-            r'(?:COO|Chief Operating Officer)(?:[^,.]{0,10}?)(?:is|:)?\s+([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)',
-            r'(?:VP|Vice President) of ([^,.]+?)(?:[^,.]{0,10}?)(?:is|:)?\s+([A-Z][a-zA-Z\-\']+(?:\s[A-Z][a-zA-Z\-\']+)+)',
-        ]
-        
-        for pattern in role_name_patterns:
-            matches = re.findall(pattern, text)
-            for match in matches:
-                # Handle both role+name and department+role+name patterns
-                if isinstance(match, tuple) and len(match) == 2:
-                    department, name = match
-                    title = f"VP of {department}"
-                else:
-                    name = match
-                    title = pattern.split('(?:is|:)?')[0].strip()
-                    
-                if self._is_valid_name(name):
-                    name_parts = name.strip().split(" ", 1)
-                    if len(name_parts) >= 2:
-                        employee = {
-                            "first_name": name_parts[0].strip(),
-                            "last_name": name_parts[1].strip(),
-                            "job_title": title.strip(),
-                            "confidence_score": 0.8  # Higher confidence for clear role statements
-                        }
-                        employees.append(employee)
-        
-        # Extract email addresses
-        email_pattern = r'([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})'
-        emails = re.findall(email_pattern, text)
-        
-        # Try to associate emails with employees
-        for email in emails:
-            name_part = email.split('@')[0]
-            
-            for employee in employees:
-                first_name = employee.get("first_name", "").lower()
-                last_name = employee.get("last_name", "").lower()
-                
-                if first_name in name_part.lower() or last_name in name_part.lower():
-                    employee["email"] = email
-                    break
-        
-        return employees
-    
-
-    def _is_valid_name(self, name: str) -> bool:
-        """Check if a string looks like a valid person name"""
-        # Skip common false positives
-        invalid_names = [
-            "Executive Officer", "Financial Officer", "Technology Officer",
-            "Revenue Officer", "Growth Officer", "Operating Officer", 
-            "Marketing Officer", "Product Officer", "Other Executives",
-            "New York", "San Francisco", "Los Angeles", "United States",
-            "Company Profile", "Job Description", "More Information"
-        ]
-        
-        for invalid in invalid_names:
-            if invalid.lower() in name.lower():
-                return False
-        
-        # Names should have 2-4 parts
-        parts = name.split()
-        if len(parts) < 2 or len(parts) > 4:
-            return False
-        
-        # Names shouldn't contain common words
-        common_words = ["the", "and", "or", "in", "at", "by", "for", "with", "about"]
-        if any(word.lower() in common_words for word in parts):
-            return False
-        
-        # Names should be reasonably sized
-        if any(len(part) < 2 for part in parts):
-            return False
-        if any(len(part) > 15 for part in parts):
-            return False
-        
-        return True
-
-
-    def _extract_employees_from_job_description(self, job: Job) -> List[Dict]:
-        """Extract potential hiring managers from job description"""
-        employees = []
-        
-        if not job.description:
-            return employees
-            
-        description = job.description
-        
-        # Patterns to identify hiring managers in job descriptions
-        employee_patterns = [
-            r"report(?:ing)? to (?:the )?([A-Z][a-z]+ [A-Z][a-z]+)",
-            r"(?:the )?([A-Z][a-z]+ [A-Z][a-z]+)(?:,)? (?:the )?(?:hiring manager|manager)",
-            r"(?:contact|email) ([A-Z][a-z]+ [A-Z][a-z]+)",
-            r"(?:questions|inquiries)(?:[^.]*?)(?:to|contact) ([A-Z][a-z]+ [A-Z][a-z]+)"
-        ]
-        
-        for pattern in employee_patterns:
-            matches = re.findall(pattern, description)
-            
-            for match in matches:
-                name_parts = match.split(" ", 1)
-                if len(name_parts) >= 2:
-                    employee = {
-                        "first_name": name_parts[0].strip(),
-                        "last_name": name_parts[1].strip(),
-                        "job_title": self._infer_manager_title(job.title),
-                        "role": self.hiring_manager_role,
-                        "source": f"job_description_{job.id}",
-                        "confidence_score": 0.9,
-                        "influence_level": 9
-                    }
-                    employees.append(employee)
-
-        return employees
     
     def _create_or_update_users(self, employee_data_list: List[Dict]) -> List[User]:
         """
-        Create or update User objects based on found employee data
-        
-        Args:
-            employee_data_list: List of dictionaries containing employee information
-            
-        Returns:
-            List of User objects created or updated
+        Create or update User and UserCompanyAssociation objects from structured data.
+        Uses LinkedIn URL or URN as a primary key for finding users if available.
         """
         user_objects = []
-        
-        # First, deduplicate employees
+        processed_count = 0
+        created_users = 0
+        updated_users = 0
+        created_assocs = 0
+        updated_assocs = 0
+
+        # Deduplicate based on LinkedIn identifier first, then name
         unique_employees = self._deduplicate_employees(employee_data_list)
-        
+        logger.info(f"Processing {len(unique_employees)} unique potential employees after deduplication.")
+
+
         for employee_data in unique_employees:
+            processed_count += 1
             first_name = employee_data.get("first_name", "").strip()
             last_name = employee_data.get("last_name", "").strip()
-            
-            # Skip if we don't have at least a name
+            linkedin_url = employee_data.get("linkedin_url")
+            # Linkedin URN might be more stable if available: urn:li:profile:xxxx
+            linkedin_urn = employee_data.get("linkedin_urn")
+            job_title = employee_data.get("job_title")
+            mapped_role = employee_data.get("mapped_role")
+            influence = employee_data.get("influence_score", 5)
+            source_note = f"Discovered via {employee_data.get('source', 'linkedin_research')}"
+
             if not first_name or not last_name:
+                logger.warning(f"Skipping employee data due to missing name: {employee_data}")
                 continue
-                
-            # Get email
-            email = employee_data.get("email")
-            
-            # If no email, generate a placeholder
-            if not email:
-                email = self._generate_placeholder_email(first_name, last_name, self.company.name)
-            
-            # Try to find existing user
-            try:
-                user = User.objects.get(email=email)
-                # Update name if missing
-                if not user.first_name:
+
+            user = None
+            user_found = False
+            user_created = False
+
+            # --- Find Existing User ---
+            # 1. Try finding by LinkedIn URL via UserContactMethod or UserSourceLink
+            if linkedin_url:
+                 contact_method = UserContactMethod.objects.filter(
+                      method_type__name="LinkedIn Profile", # Assumes this ContactMethodType exists
+                      value=linkedin_url
+                 ).select_related('user').first()
+                 if contact_method:
+                     user = contact_method.user
+                     user_found = True
+                     logger.debug(f"Found existing user {user.id} via LinkedIn URL in ContactMethod: {linkedin_url}")
+                 else:
+                      # Try UserSourceLink as well
+                      source_link = UserSourceLink.objects.filter(
+                           source_type="linkedin",
+                           url=linkedin_url
+                      ).select_related('user').first()
+                      if source_link:
+                           user = source_link.user
+                           user_found = True
+                           logger.debug(f"Found existing user {user.id} via LinkedIn URL in SourceLink: {linkedin_url}")
+
+            # 2. If not found by URL, try finding by name (less reliable)
+            # Consider adding company context here if users can have same name at different companies
+            if not user_found:
+                # This is prone to errors if names are common. Email would be better.
+                # For now, let's skip name-based finding if URL wasn't found,
+                # and rely on creating a new user with a placeholder email.
+                # Or, generate a *more unique* placeholder based on URN/URL if possible.
+                pass
+
+            # --- Create or Update User ---
+            if user_found:
+                # Update existing user if needed
+                update_fields = []
+                if not user.first_name and first_name:
                     user.first_name = first_name
-                if not user.last_name:
+                    update_fields.append('first_name')
+                if not user.last_name and last_name:
                     user.last_name = last_name
-                
-            except User.DoesNotExist:
-                # Create new user
-                user = User.objects.create(
-                    email=email,
-                    first_name=first_name,
-                    last_name=last_name
-                )
-            
-            # Try to find LinkedIn profile
-            if not user.linkedin_handle:
-                profile_info = self.find_linkedin_profile(first_name, last_name)
-                
-                if profile_info:
-                    # Update user with LinkedIn handle
-                    user.linkedin_handle = profile_info['handle']
-                    
-                    # If we have a UserContactMethod model, create a LinkedIn contact method
-                    linkedin_method_type, _ = ContactMethodType.objects.get_or_create(
-                        name="LinkedIn Profile",
-                        defaults={"category": "other"}
+                    update_fields.append('last_name')
+                # Update linkedin_handle if empty or different (using publicIdentifier if available)
+                new_handle = employee_data.get('linkedin_public_id') or self.profile_finder._extract_handle_from_url(linkedin_url)
+                if new_handle and user.linkedin_handle != new_handle:
+                     user.linkedin_handle = new_handle
+                     update_fields.append('linkedin_handle')
+
+                if update_fields:
+                    user.save(update_fields=update_fields)
+                    updated_users += 1
+                    logger.info(f"Updated existing User: {user.email} (ID: {user.id})")
+
+            else:
+                # Create new user with placeholder email
+                placeholder_email = self._generate_placeholder_email(first_name, last_name, self.company.name, linkedin_urn or linkedin_url)
+                try:
+                    user = User.objects.create(
+                        email=placeholder_email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        linkedin_handle = employee_data.get('linkedin_public_id') or self.profile_finder._extract_handle_from_url(linkedin_url)
                     )
-                    
-                    UserContactMethod.objects.update_or_create(
+                    user_created = True
+                    created_users += 1
+                    logger.info(f"Created new User: {user.email} (ID: {user.id})")
+                except Exception as create_err: # Catch potential IntegrityError if email exists
+                     logger.error(f"Failed to create user for {first_name} {last_name} with email {placeholder_email}: {create_err}")
+                     # Attempt to fetch user by email if creation failed due to constraint
+                     user = User.objects.filter(email=placeholder_email).first()
+                     if not user: continue # Skip if still can't get user
+
+
+            # --- Create/Update LinkedIn Contact Method and Source Link ---
+            if user and linkedin_url:
+                 try:
+                      linkedin_method_type, _ = ContactMethodType.objects.get_or_create(
+                           name="LinkedIn Profile", defaults={"category": "social"}
+                      )
+                      UserContactMethod.objects.update_or_create(
+                           user=user, method_type=linkedin_method_type,
+                           defaults={"value": linkedin_url}
+                      )
+                      UserSourceLink.objects.update_or_create(
+                           user=user, url=linkedin_url, source_type="linkedin",
+                           defaults={
+                                "title": f"LinkedIn Profile: {user.first_name} {user.last_name}",
+                                "notes": source_note
+                           }
+                      )
+                 except Exception as link_err:
+                      logger.error(f"Error creating/updating contact/source link for user {user.id}: {link_err}")
+
+
+            # --- Create or Update Company Association ---
+            if user:
+                try:
+                    association, assoc_created = UserCompanyAssociation.objects.update_or_create(
                         user=user,
-                        method_type=linkedin_method_type,
-                        defaults={"value": profile_info['url']}
+                        company=self.company,
+                        # Add job_title to key if you want unique entry per title at same company
+                        # unique_together = ('user', 'company', 'job_title') in Meta
+                        defaults={
+                            "job_title": job_title,
+                            # "department": employee_data.get("department"), # Add if available
+                            "role": mapped_role, # Use the mapped role
+                            "influence_level": influence,
+                            "notes": source_note,
+                            "relationship_status": "to_contact" # Default status
+                        }
                     )
-                    
-                    # Check if the profile handle suggests a name change
-                    if self._might_be_name_change(profile_info['handle'], first_name, last_name):
-                        # Store original name in alternate_names
-                        if not user.alternate_names:
-                            user.alternate_names = []
-                            
-                        original_name = f"{first_name} {last_name}"
-                        if original_name not in user.alternate_names:
-                            user.alternate_names.append(original_name)
-            
-            # Save user
-            user.save()
-            
-            # Create or update company association
-            association, created = UserCompanyAssociation.objects.update_or_create(
-                user=user,
-                company=self.company,
-                defaults={
-                    "job_title": employee_data.get("job_title"),
-                    "department": employee_data.get("department"),
-                    "role": employee_data.get("role"),
-                    "influence_level": employee_data.get("influence_level", 5),
-                    "notes": f"Discovered via {employee_data.get('source', 'research')}. Confidence: {employee_data.get('confidence_score', 0.5)}",
-                    "relationship_status": "to_contact"
-                }
-            )
-            
-            user_objects.append(user)
-            
+                    if assoc_created:
+                        created_assocs += 1
+                        logger.debug(f"Created UserCompanyAssociation for User {user.id} at Company {self.company.id}")
+                    else:
+                        updated_assocs += 1
+                        logger.debug(f"Updated UserCompanyAssociation for User {user.id} at Company {self.company.id}")
+
+                    user_objects.append(user)
+                except Exception as assoc_err:
+                     logger.error(f"Failed to create/update association for user {user.id} and company {self.company.id}: {assoc_err}")
+
+        logger.info(f"User processing summary: Found={processed_count}, Users Created={created_users}, Users Updated={updated_users}, Assocs Created={created_assocs}, Assocs Updated={updated_assocs}")
         return user_objects
     
+
     def _deduplicate_employees(self, employees: List[Dict]) -> List[Dict]:
-        """Deduplicate employee data, merging information when appropriate"""
-        # Group by name
-        employee_dict = {}
-        
+        """Deduplicate employee data based on LinkedIn URL/URN first, then name."""
+        unique_employees_map = {}
+
         for emp in employees:
-            first_name = emp.get("first_name", "").strip().lower()
-            last_name = emp.get("last_name", "").strip().lower()
-            
-            if not first_name or not last_name:
-                continue
-                
-            key = f"{first_name}|{last_name}"
-            
-            if key in employee_dict:
-                # Merge records
-                existing = employee_dict[key]
-                
-                # Keep non-empty values from the new record
-                for field in ["job_title", "email", "linkedin_url"]:
-                    if not existing.get(field) and emp.get(field):
-                        existing[field] = emp.get(field)
-                
-                # Keep the source with higher confidence
-                if emp.get("confidence_score", 0) > existing.get("confidence_score", 0):
-                    existing["source"] = emp.get("source")
-                    existing["confidence_score"] = emp.get("confidence_score")
-                
-                # Keep the highest influence level
-                existing["influence_level"] = max(
-                    existing.get("influence_level", 0),
-                    emp.get("influence_level", 0)
-                )
-                
-                # Keep role preference order: hiring manager > recruiter > other
-                if (emp.get("role") == self.hiring_manager_role and 
-                    existing.get("role") != self.hiring_manager_role):
-                    existing["role"] = emp.get("role")
-                    
+            key = None
+            # Prioritize LinkedIn identifiers for uniqueness
+            if emp.get('linkedin_urn'):
+                key = emp['linkedin_urn']
+            elif emp.get('linkedin_url'):
+                # Normalize URL slightly for better matching
+                key = self.profile_finder._clean_profile_url(emp['linkedin_url'])
+
+            # If no LinkedIn ID, use name as fallback key (less reliable)
+            if not key:
+                 first_name = emp.get("first_name", "").strip().lower()
+                 last_name = emp.get("last_name", "").strip().lower()
+                 if first_name and last_name:
+                      key = f"name::{first_name}|{last_name}"
+
+            if not key: continue # Skip if no usable key
+
+            if key in unique_employees_map:
+                # Merge: Keep the most complete record, prioritize certain fields
+                existing = unique_employees_map[key]
+                for field in ['job_title', 'linkedin_url', 'linkedin_urn', 'linkedin_public_id', 'profile_summary']:
+                     if not existing.get(field) and emp.get(field):
+                         existing[field] = emp.get(field)
+
+                # Take the higher influence score and corresponding role
+                if emp.get('influence_score', 0) > existing.get('influence_score', 0):
+                    existing['influence_score'] = emp.get('influence_score')
+                    existing['mapped_role'] = emp.get('mapped_role') # Role linked to higher influence
+
+                # Append sources if different? Or just keep one source note?
+                # existing['source'] = existing.get('source', '') + "; " + emp.get('source', '')
             else:
-                # Add new record
-                employee_dict[key] = emp.copy()
-                # Ensure first_name and last_name are properly capitalized
-                employee_dict[key]["first_name"] = first_name.capitalize()
-                employee_dict[key]["last_name"] = last_name.capitalize()
-        
-        return list(employee_dict.values())
+                # Add new entry, ensure names are capitalized
+                new_entry = emp.copy()
+                new_entry["first_name"] = new_entry.get("first_name", "").strip().capitalize()
+                new_entry["last_name"] = new_entry.get("last_name", "").strip().capitalize()
+                unique_employees_map[key] = new_entry
+
+        return list(unique_employees_map.values())
     
-    def _infer_manager_title(self, job_title: str) -> str:
-        """Infer a likely manager title based on a job title"""
-        if not job_title:
-            return "Manager"
-            
-        job_title = job_title.lower()
-        
-        if "senior" in job_title or "sr." in job_title:
-            base_title = job_title.replace("senior", "").replace("sr.", "").strip()
-            return f"Director of {base_title}"
-        elif "engineer" in job_title:
-            return "Engineering Manager"
-        elif "designer" in job_title:
-            return "Design Manager"
-        elif "product" in job_title:
-            return "Product Manager"
-        elif "data" in job_title:
-            return "Data Science Manager"
-        elif "marketing" in job_title:
-            return "Marketing Manager"
-        elif "sales" in job_title:
-            return "Sales Manager"
+    def _deduplicate_employees(self, employees: List[Dict]) -> List[Dict]:
+        """Deduplicate employee data based on LinkedIn URL/URN first, then name."""
+        unique_employees_map = {}
+
+        for emp in employees:
+            key = None
+            # Prioritize LinkedIn identifiers for uniqueness
+            if emp.get('linkedin_urn'):
+                key = emp['linkedin_urn']
+            elif emp.get('linkedin_url'):
+                # Normalize URL slightly for better matching
+                key = self.profile_finder._clean_profile_url(emp['linkedin_url'])
+
+            # If no LinkedIn ID, use name as fallback key (less reliable)
+            if not key:
+                 first_name = emp.get("first_name", "").strip().lower()
+                 last_name = emp.get("last_name", "").strip().lower()
+                 if first_name and last_name:
+                      key = f"name::{first_name}|{last_name}"
+
+            if not key: continue # Skip if no usable key
+
+            if key in unique_employees_map:
+                # Merge: Keep the most complete record, prioritize certain fields
+                existing = unique_employees_map[key]
+                for field in ['job_title', 'linkedin_url', 'linkedin_urn', 'linkedin_public_id', 'profile_summary']:
+                     if not existing.get(field) and emp.get(field):
+                         existing[field] = emp.get(field)
+
+                # Take the higher influence score and corresponding role
+                if emp.get('influence_score', 0) > existing.get('influence_score', 0):
+                    existing['influence_score'] = emp.get('influence_score')
+                    existing['mapped_role'] = emp.get('mapped_role') # Role linked to higher influence
+
+                # Append sources if different? Or just keep one source note?
+                # existing['source'] = existing.get('source', '') + "; " + emp.get('source', '')
+            else:
+                # Add new entry, ensure names are capitalized
+                new_entry = emp.copy()
+                new_entry["first_name"] = new_entry.get("first_name", "").strip().capitalize()
+                new_entry["last_name"] = new_entry.get("last_name", "").strip().capitalize()
+                unique_employees_map[key] = new_entry
+
+        return list(unique_employees_map.values())
+
+
+    def _generate_placeholder_email(self, first_name: str, last_name: str, company_name: str, identifier: Optional[str] = None) -> str:
+        """Generate a placeholder email, trying to make it unique."""
+        first = re.sub(r'\W+', '', first_name).lower()
+        last = re.sub(r'\W+', '', last_name).lower()
+        comp = re.sub(r'\W+', '', company_name).lower()[:15] # Limit company part length
+
+        unique_part = ""
+        if identifier: # Use part of URN or URL hash for uniqueness
+            if "urn:li:profile:" in identifier:
+                unique_part = identifier.split(':')[-1][:8] # Use first 8 chars of ID part
+            elif "linkedin.com/in/" in identifier:
+                 handle = self.profile_finder._extract_handle_from_url(identifier)
+                 if handle: unique_part = handle[:8]
+
+        if unique_part:
+             return f"{first}.{last}.{unique_part}@{comp}.fartemis.placeholder"
         else:
-            return f"Manager of {job_title}"
-    
-    def _generate_placeholder_email(self, first_name: str, last_name: str, company_name: str) -> str:
-        """Generate a placeholder email for a user"""
-        # Clean inputs
-        first = re.sub(r'[^a-zA-Z0-9]', '', first_name).lower()
-        last = re.sub(r'[^a-zA-Z0-9]', '', last_name).lower()
-        company = re.sub(r'[^a-zA-Z0-9]', '', company_name).lower()
-        
-        return f"{first}.{last}.{company}@fartemis.placeholder"
-    
-
-
-    def find_linkedin_profile(self, first_name, last_name):
-        """
-        Find LinkedIn profile for a person using the profile finder
-        
-        Args:
-            first_name: Person's first name
-            last_name: Person's last name
-            
-        Returns:
-            dict: Profile information or None if not found
-        """
-        # Use the company name from this controller
-        company_name = self.company.name
-        
-        # Use the profile finder to find the LinkedIn profile
-        profile_info = self.linkedin_finder.find_profile(
-            first_name=first_name,
-            last_name=last_name,
-            company=company_name,
-            search_engine='both',
-            max_pages=5
-        )
-        
-        return profile_info
-
-    def _extract_field(self, text, field_name):
-        """Extract a field from formatted text"""
-        lines = text.split('\n')
-        for line in lines:
-            if line.startswith(f"{field_name}:"):
-                return line.split(f"{field_name}:")[1].strip()
-        return None
-
-
-
-    def _extract_linkedin_profile_url(self, search_results):
-        """Extract LinkedIn profile URL from search results"""
-        
-        # Process results depending on format
-        results_to_process = []
-        if isinstance(search_results, dict) and "results" in search_results:
-            results_to_process = search_results.get("results", [])
-        elif isinstance(search_results, list):
-            results_to_process = search_results
-        
-        # Look for LinkedIn profile URLs
-        for result in results_to_process:
-            if not isinstance(result, dict):
-                continue
-                
-            url = result.get("url", "")
-            
-            # Check if it's a direct LinkedIn profile
-            if "linkedin.com/in/" in url:
-                return url
-        
-        # Check content for LinkedIn profile URLs
-        linkedin_pattern = r'https?://(?:www\.)?linkedin\.com/in/[a-zA-Z0-9_-]+'
-        
-        for result in results_to_process:
-            if not isinstance(result, dict):
-                continue
-                
-            content = result.get("content", "")
-            
-            if content and isinstance(content, str):
-                profile_urls = re.findall(linkedin_pattern, content)
-                if profile_urls:
-                    return profile_urls[0]
-        
-        return None
-
-
-    def _might_be_name_change(self, handle, first_name, last_name):
-        """
-        Check if a LinkedIn handle suggests a name change
-        
-        Args:
-            handle: LinkedIn handle
-            first_name: First name we know
-            last_name: Last name we know
-            
-        Returns:
-            bool: True if might be a name change, False otherwise
-        """
-        handle_lower = handle.lower()
-        first_lower = first_name.lower()
-        last_lower = last_name.lower()
-        
-        # Direct match - not a name change
-        if handle_lower == f"{first_lower}{last_lower}" or handle_lower == f"{last_lower}{first_lower}":
-            return False
-            
-        # Common variations - not a name change
-        variations = [
-            f"{first_lower}.{last_lower}",
-            f"{first_lower}-{last_lower}",
-            f"{first_lower}_{last_lower}",
-            f"iam{first_lower}{last_lower}",
-            f"{first_lower[0]}{last_lower}",
-            f"{first_lower}{last_lower[0]}"
-        ]
-        
-        if any(variation in handle_lower for variation in variations):
-            return False
-            
-        # If first name is in handle but last name is not, might be a name change
-        if first_lower in handle_lower and last_lower not in handle_lower:
-            return True
-            
-        # If neither name component is in the handle, might be a name change
-        if first_lower not in handle_lower and last_lower not in handle_lower:
-            return True
-            
-        return False
-
-        
-    def _check_for_name_change(self, profile_data, original_first, original_last):
-        """
-        Check if there's evidence of a name change in the profile data
-        
-        Args:
-            profile_data: LinkedIn profile data dictionary
-            original_first: Original first name
-            original_last: Original last name
-            
-        Returns:
-            dict: Name change information or None if no change detected
-        """
-        if not profile_data or not isinstance(profile_data, dict):
-            return None
-            
-        try:
-            # Get the LinkedIn profile URL
-            profile_url = profile_data.get("url", "")
-            if not profile_url:
-                return None
-                
-            # Extract the handle from the URL
-            if "/in/" in profile_url:
-                handle = profile_url.split("/in/")[-1].rstrip("/")
-            else:
-                handle = ""
-            
-            # Check if handle contains the original names
-            original_first_lower = original_first.lower()
-            original_last_lower = original_last.lower()
-            handle_lower = handle.lower()
-            
-            # If handle doesn't seem to match the original name, might indicate a name change
-            if (original_first_lower not in handle_lower) and (original_last_lower not in handle_lower):
-                # Use the title to try to extract the current name
-                title = profile_data.get("title", "")
-                
-                # Try to extract name from LinkedIn title
-                current_name = None
-                if " - " in title:
-                    current_name = title.split(" - ")[0].strip()
-                elif " | " in title:
-                    current_name = title.split(" | ")[0].strip()
-                elif ":" in title:
-                    current_name = title.split(":")[0].strip()
-                
-                if current_name and len(current_name.split()) >= 2:
-                    # Make sure it looks like a name (not just "LinkedIn" or "Profile")
-                    if not any(word.lower() in current_name.lower() for word in ["linkedin", "profile"]):
-                        return {
-                            "original_name": f"{original_first} {original_last}",
-                            "current_name": current_name,
-                            "confidence": 0.7
-                        }
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error checking for name change: {str(e)}")
-            return None
+             # Fallback if no identifier - less unique
+             timestamp = str(int(time.time() * 1000))[-6:] # Add timestamp part
+             return f"{first}.{last}.{timestamp}@{comp}.fartemis.placeholder"

@@ -34,6 +34,18 @@ Virtual env:
     CREATE DATABASE fartemis OWNER fartemis;
 
 
+### CSS - tailwind
+
+I used the v0.dev service to create this template 
+
+The below chat is the transcript of the actions
+
+https://v0.dev/chat/dtac-software-development-landing-zZs3CsClWoK
+
+Make sure to install tailwind if there are some discrepancies 
+
+https://django-tailwind.readthedocs.io/en/latest/installation.html
+
 
 ## Basic Commands
 

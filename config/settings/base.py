@@ -411,6 +411,9 @@ TAVILY_API_KEY = env("TAVILY_API_KEY", default=None)
 
 # DEEPSEEK
 DEEPSEEK_API_KEY = env("DEEPSEEK_API_KEY", default=None)
+DEEPSEEK_MODEL = env("DEEPSEEK_MODEL", default="deepseek-coder-33b-base")
+DEEPSEEK_MODEL_BIG = env("DEEPSEEK_MODEL_BIG", default=DEEPSEEK_MODEL)
+DEEPSEEK_MODEL_SMALL = env("DEEPSEEK_MODEL_SMALL", default="deepseek-coder-6.7b-base")
 
 # BLUESKY
 BLUESKY_USERNAME = env("BLUESKY_USERNAME", default=None)

@@ -28,6 +28,7 @@ class LLMProvider:
     
     ANTHROPIC = 'anthropic'
     DEEPSEEK = 'deepseek'
+    DEEPL = 'deepl'
     OPENAI = 'openai'  # For future extension
     MISTRAL = "mistral"
     GOOGLE = "google"
@@ -40,6 +41,7 @@ class LLMProvider:
         (MISTRAL, 'Mistral'),
         (GOOGLE, 'Google (Gemini)'),
         (OLLAMA, 'Ollama'),
+        (DEEPL, 'DeepL'),
     ]
     
     @classmethod

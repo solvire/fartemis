@@ -1,0 +1,120 @@
+/* static/css/main.css */
+/* Dark theme enhancements */
+
+/* Improve contrast for text */
+.text-muted {
+  color: #adb5bd !important;
+}
+
+/* Card styling for dark theme */
+.card {
+  background-color: #2b3035;
+  border-color: #7e858d;
+}
+
+/* Form control styling */
+.form-control, .form-select {
+  background-color: #212529;
+  border-color: #495057;
+  color: #e9ecef;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: #2b3035;
+  color: #e9ecef;
+}
+
+/* Custom primary color if needed */
+:root {
+  --bs-primary: #192d4d;
+  --bs-primary-rgb: 59, 130, 246;
+}
+
+:root[data-bs-theme="dark"] {
+  --bs-body-bg: #121212;
+  --bs-body-color: #e9ecef;
+  --bs-border-color: #2c2c2c;
+}
+
+/* Custom spacing for larger screens */
+@media (min-width: 768px) {
+  .py-md-7 {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* Object fit utility for images */
+.object-fit-cover {
+  object-fit: cover;
+}
+
+/* Ensure proper spacing in the footer */
+footer .nav-link {
+  padding: 0.25rem 0;
+}
+
+/* Improve contrast for placeholder text */
+::placeholder {
+  color: #6c757d !important;
+  opacity: 1;
+}
+
+
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand img {
+  transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover img {
+  transform: scale(1.1);
+}
+
+.nav-link {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 50%;
+  background-color: var(--bs-primary);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 70%;
+}
+
+.nav-link.active::after {
+  width: 70%;
+}
+
+/* Custom background color for hero */
+.bg-hero {
+  background-color: #000809 !important;
+}
+
+/* Enhance text readability on very dark background */
+.bg-hero h1, 
+.bg-hero .display-5 {
+  color: #ffffff;
+}
+
+.bg-hero p {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Optional: Add a subtle gradient to add depth */
+.bg-hero {
+  background: #000809;
+  background: linear-gradient(135deg, #000809 0%, #001214 100%);
+}

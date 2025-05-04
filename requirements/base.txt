@@ -49,3 +49,4 @@ bs4==0.0.2
 feedparser==6.0.11
 linkedin-api==2.3.1
 
+thefuzz==0.22.1
