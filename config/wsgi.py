@@ -18,22 +18,21 @@ framework.
 import os
 import sys
 
-from pathlib import Path
 import environ
 from django.core.wsgi import get_wsgi_application
 
 # This allows easy placement of apps within the interior
 # fartemis directory.
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+ROOT_DIR = environ.Path() 
 env = environ.Env()
 
-READ_DOT_ENV_FILE = os.path.isfile(str(BASE_DIR.path(".env")))
+READ_DOT_ENV_FILE = os.path.isfile(str(ROOT_DIR.path(".env")))
 
 if READ_DOT_ENV_FILE:
     # Operating System Environment variables have precedence over variables defined in the .env file,
     # that is to say variables from the .env files will only be used if not defined
     # as environment variables.
-    env_file = str(BASE_DIR.path(".env"))
+    env_file = str(ROOT_DIR.path(".env"))
     env.read_env(env_file)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", env("DJANGO_SETTINGS_MODULE"))
 else:
@@ -42,7 +41,7 @@ else:
 
 
 
-sys.path.append(str(BASE_DIR / "fartemis"))
+sys.path.append(str(ROOT_DIR / "fartemis"))
 # We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks
 # if running multiple sites in the same mod_wsgi process. To fix this, use
 # mod_wsgi daemon mode with each site in its own daemon process, or use
