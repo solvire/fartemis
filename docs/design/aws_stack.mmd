@@ -1,0 +1,52 @@
+graph LR
+    subgraph "User's Browser"
+        UB(User Browser)
+    end
+
+    subgraph "AWS Cloud"
+        subgraph "EC2 Instance (dtac.io Server)"
+            Nginx(Nginx Reverse Proxy);
+            StaticFiles[/Static Files @ /var/www/.../staticfiles/];
+            GunicornSocket(Gunicorn Socket @ /run/.../gunicorn.sock);
+            DjangoApp(Django Application);
+            PostgresDB[(PostgreSQL DB @ localhost)];
+
+            subgraph "IAM Role & Instance Metadata"
+                 EC2Meta(EC2 Metadata Service);
+                 IAMRole(IAM Role: EC2-DTAC-App-Role);
+            end
+
+            Nginx -- "Request for /static/..." --> StaticFiles;
+            Nginx -- "Request for /..." --> GunicornSocket;
+            GunicornSocket -- "WSGI" --> DjangoApp;
+            DjangoApp -- "DB Query" --> PostgresDB;
+            DjangoApp -- "Needs AWS Credentials" --> EC2Meta;
+            EC2Meta -- "Provides Temp Credentials" --> DjangoApp;
+            IAMRole -- "Attached To Instance" --> EC2Meta;
+
+        end
+
+        subgraph "Other AWS Services"
+            SSM[(SSM Parameter Store)];
+            S3[(S3 Bucket)];
+        end
+
+         DjangoApp -- "Uses Credentials to Call API" --> SSM;
+         DjangoApp -- "Uses Credentials to Call API" --> S3;
+         IAMRole -- "Defines Permissions For" --> SSM;
+         IAMRole -- "Defines Permissions For" --> S3;
+
+    end
+
+    UB -- "HTTPS Request (Port 443)" --> Nginx;
+
+    %% Styling (Optional)
+    style Nginx fill:#269539,stroke:#000,stroke-width:2px,color:#fff;  %% Nginx Green
+    style DjangoApp fill:#0C4B33,stroke:#000,stroke-width:2px,color:#fff;  %% Django Green
+    style PostgresDB fill:#336791,stroke:#000,stroke-width:2px,color:#fff;  %% PostgreSQL Blue
+    style GunicornSocket fill:#ddd,stroke:#000,stroke-width:1px;           %% Socket Grey
+    style StaticFiles fill:#eee,stroke:#000,stroke-width:1px;             %% Files Grey
+    style EC2Meta fill:#FF9900,stroke:#000,stroke-width:1px;             %% AWS Orange
+    style IAMRole fill:#FF9900,stroke:#000,stroke-width:1px;             %% AWS Orange
+    style SSM fill:#232F3E,stroke:#000,stroke-width:1px,color:#fff;    %% AWS Dark Blue
+    style S3 fill:#232F3E,stroke:#000,stroke-width:1px,color:#fff;     %% AWS Dark Blue
