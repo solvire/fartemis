@@ -39,7 +39,7 @@ if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = env.bool("DJANGO_DEBUG", False)
+DEBUG = env.bool("DEBUG", False)
 
 #also a debug but separate settings for mocking up API calls
 MOCK_DATA = env.bool("MOCK_DATA", False)
