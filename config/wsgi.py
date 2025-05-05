@@ -14,44 +14,44 @@ middleware here, or combine a Django application with an application of another
 framework.
 
 """
-
 import os
 import sys
-
+from pathlib import Path
 import environ
 from django.core.wsgi import get_wsgi_application
 
-# This allows easy placement of apps within the interior
-# fartemis directory.
-ROOT_DIR = environ.Path() 
+# Calculate the project root directory (assuming wsgi.py is in 'config/')
+# Adjust if your structure is different (e.g., if wsgi.py is at the top level)
+ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent
 env = environ.Env()
 
-READ_DOT_ENV_FILE = os.path.isfile(str(ROOT_DIR.path(".env")))
+# --- Optional: Only if your apps are in a non-standard location ---
+# If your apps are inside 'fartemis' at the root level:
+# APP_DIR = ROOT_DIR / "fartemis"
+# sys.path.insert(0, str(APP_DIR))
+# Remove this section if unsure or if it causes problems.
+# -----------------------------------------------------------------
 
-if READ_DOT_ENV_FILE:
-    # Operating System Environment variables have precedence over variables defined in the .env file,
-    # that is to say variables from the .env files will only be used if not defined
-    # as environment variables.
-    env_file = str(ROOT_DIR.path(".env"))
-    env.read_env(env_file)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", env("DJANGO_SETTINGS_MODULE"))
+# Define the default settings module for WSGI (production)
+PRODUCTION_SETTINGS = "config.settings.production"
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", PRODUCTION_SETTINGS)
+
+# --- .env Loading ---
+# Look for .env in the project root
+env_file_path = ROOT_DIR / ".env"
+if env_file_path.is_file():
+    print(f"Loading WSGI environment from: {env_file_path}")
+    # Load .env variables into os.environ, potentially overwriting DJANGO_SETTINGS_MODULE
+    # if it's defined within .env
+    env.read_env(str(env_file_path), overwrite=True)
+    # Ensure the setting module from .env or the default is set
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", env("DJANGO_SETTINGS_MODULE", default=PRODUCTION_SETTINGS))
 else:
-    print(".env missing using ENV for module settings")
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", env("DJANGO_SETTINGS_MODULE", default="config.settings.local"))
+    print(f".env file not found at {env_file_path}, using default settings module.")
+    # If .env is missing, ensure the default production setting is definitely used.
+    os.environ["DJANGO_SETTINGS_MODULE"] = PRODUCTION_SETTINGS
 
 
+# print(f"WSGI using settings: {os.environ['DJANGO_SETTINGS_MODULE']}") # Optional: Debug print
 
-sys.path.append(str(ROOT_DIR / "fartemis"))
-# We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks
-# if running multiple sites in the same mod_wsgi process. To fix this, use
-# mod_wsgi daemon mode with each site in its own daemon process, or use
-# os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings.production"
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
-
-# This application object is used by any WSGI server configured to use this
-# file. This includes Django's development server, if the WSGI_APPLICATION
-# setting points here.
 application = get_wsgi_application()
-# Apply WSGI middleware here.
-# from helloworld.wsgi import HelloWorldApplication
-# application = HelloWorldApplication(application)
