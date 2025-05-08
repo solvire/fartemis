@@ -39,7 +39,7 @@ if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
 
 DJANGO_SETTINGS_MODULE = env("DJANGO_SETTINGS_MODULE")
 print(f"Env {SSM_ENVIRONMENT} set for module: {DJANGO_SETTINGS_MODULE} ")
-
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
 
 # sentry setup
 # only need in not local or test
