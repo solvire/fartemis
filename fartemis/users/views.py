@@ -73,6 +73,17 @@ def contact_submit_view(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
+            # --- HONEYPOT CHECK ---
+            # Access the cleaned data for your honeypot field by its name
+            if form.cleaned_data.get('thepot'): # Or whatever you named it in forms.py
+                # Honeypot field was filled, likely a bot.
+                # You can log this attempt if you want.
+                print(f"Honeypot triggered by submission: {request.POST}")
+                # Silently "succeed" from the bot's perspective but don't send an email.
+                # This prevents the bot from knowing its strategy failed.
+                context = {'form_submitted_successfully': True} # Simulates success
+                return render(request, 'pages/partials/contact_form_partial.html', context)
+            # --- END HONEYPOT CHECK ---
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
             email = form.cleaned_data['email']

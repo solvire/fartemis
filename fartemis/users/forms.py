@@ -4,7 +4,6 @@ from django.contrib.auth import forms as admin_forms
 from django.forms import EmailField
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django_recaptcha.fields import ReCaptchaField
 
 from .models import User
 
@@ -69,8 +68,8 @@ class ContactForm(forms.Form):
                                     widget=forms.Select(attrs={'class': 'form-select'}))
     message = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Tell us about your project and specific needs...'}),
                             label='Project Details')
-    captcha = ReCaptchaField()
-
+    
+    thepot = forms.CharField(required=False, widget=forms.HiddenInput(), label="")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
