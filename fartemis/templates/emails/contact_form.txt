@@ -1,0 +1,10 @@
+# /templates/emails/contact_form_email.txt
+New contact form submission from DTAC.io:
+
+Name: {{ first_name }} {{ last_name }}
+Email: {{ email }}
+{% if company %}Company: {{ company }}{% endif %}
+Project Type: {{ project_type }}
+
+Message:
+{{ message_body }}

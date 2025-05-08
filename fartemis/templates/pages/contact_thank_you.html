@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thank You - DTAC{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="display-4">Thank You!</h1>
+            <p class="lead">Your message has been sent successfully.</p>
+            <p>We will get back to you within 24 hours.</p>
+            <hr class="my-4">
+            <p>
+                <a class="btn btn-primary btn-lg" href="{% url 'home' %}" role="button">Return to Homepage</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

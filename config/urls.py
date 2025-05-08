@@ -10,8 +10,11 @@ from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
+from fartemis.users.views import home_page_view
+
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/index.html"), name="home"),
+    # path("", TemplateView.as_view(template_name="pages/index.html"), name="home"),
+    path('', home_page_view, name='home'),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),

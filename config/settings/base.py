@@ -106,6 +106,7 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "django_recaptcha",
 ]
 
 LOCAL_APPS = [
@@ -250,9 +251,19 @@ X_FRAME_OPTIONS = "DENY"
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND",
+    "EMAIL_BACKEND",
     default="django.core.mail.backends.smtp.EmailBackend",
 )
+
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.example.com') # e.g., 'smtp.gmail.com' or 'smtp.sendgrid.net'
+EMAIL_PORT = env('EMAIL_PORT', default=587, cast=int)     # 587 for TLS, 465 for SSL
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = env('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_DEFAULT_FROM = env('EMAIL_DEFAULT_FROM', default='info@dtac.io')
+
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
 
@@ -261,7 +272,8 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = [("""solvire""", "solvire@fartemis.com")]
+# ("""solvire""", "info@dtac.io"), 
+ADMINS = [('steve', 'stevenjscott+dtac@gmail.com')]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
@@ -439,6 +451,9 @@ LINKEDIN_USERNAME = env("LINKEDIN_USERNAME", default=None)
 LINKEDIN_PASSWORD = env("LINKEDIN_PASSWORD", default=None)
 
 ZYTE_API_KEY = env("ZYTE_API_KEY", default=None)
+
+RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY")
+RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY")
 
 # # Other job board URLs for generic scraper
 # GLASSDOOR_BASE_URL = 'https://www.glassdoor.com'
