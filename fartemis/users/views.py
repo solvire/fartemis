@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -15,6 +16,8 @@ from django.views.generic import UpdateView
 
 from fartemis.users.models import User
 from fartemis.users.forms import ContactForm
+
+logger = logging.getLogger(__name__)
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
@@ -78,7 +81,7 @@ def contact_submit_view(request):
             if form.cleaned_data.get('thepot'): # Or whatever you named it in forms.py
                 # Honeypot field was filled, likely a bot.
                 # You can log this attempt if you want.
-                print(f"Honeypot triggered by submission: {request.POST}")
+                logger.info(f"Honeypot triggered by submission: {request.POST}")
                 # Silently "succeed" from the bot's perspective but don't send an email.
                 # This prevents the bot from knowing its strategy failed.
                 context = {'form_submitted_successfully': True} # Simulates success
@@ -129,7 +132,7 @@ def contact_submit_view(request):
                 return render(request, 'pages/partials/contact_form_partial.html', context)
 
             except Exception as e:
-                print(f"Error sending email: {e}") # Log this
+                logger.info(f"Error sending email: {e}") # Log this
                 # Return the form with a generic error message for HTMX
                 # You can add specific non-field errors to the form if needed
                 form.add_error(None, "Sorry, there was an error sending your message. Please try again.")
