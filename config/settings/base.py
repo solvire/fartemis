@@ -106,7 +106,6 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
-    "django_recaptcha",
 ]
 
 LOCAL_APPS = [
@@ -451,9 +450,6 @@ LINKEDIN_USERNAME = env("LINKEDIN_USERNAME", default=None)
 LINKEDIN_PASSWORD = env("LINKEDIN_PASSWORD", default=None)
 
 ZYTE_API_KEY = env("ZYTE_API_KEY", default=None)
-
-RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_PUBLIC_KEY")
-RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_PRIVATE_KEY")
 
 # # Other job board URLs for generic scraper
 # GLASSDOOR_BASE_URL = 'https://www.glassdoor.com'
