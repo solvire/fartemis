@@ -174,31 +174,6 @@ COMPRESS_FILTERS = {
 # more details on how to customize your logging configuration.
 
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(name)s.%(funcName)s:%(lineno)s- %(message)s"
-        }
-    },
-    "handlers": {
-        "sentry": {
-            "level": "ERROR",
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "": {"handlers": ["syslog", "sentry"], "level": DJANGO_LOG_LEVEL, "disabled": False}
-    }
-}
-
 # Sentry
 # ------------------------------------------------------------------------------
 SENTRY_DSN = env("SENTRY_DSN")
@@ -211,8 +186,8 @@ sentry_logging = LoggingIntegration(
 integrations = [
     sentry_logging,
     DjangoIntegration(),
-    CeleryIntegration(),
-    RedisIntegration(),
+    # CeleryIntegration(), # Keep if you use Celery
+    # RedisIntegration(),  # Keep if you use Redis
 ]
 sentry_sdk.init(
     dsn=SENTRY_DSN,
@@ -220,6 +195,63 @@ sentry_sdk.init(
     environment=env("SENTRY_ENVIRONMENT", default="production"),
     traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
 )
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False, # Important: Sentry relies on this being False
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(name)s.%(funcName)s:%(lineno)s- %(message)s"
+        },
+        "simple": { # Added a simple formatter for console during dev
+            "format": "%(levelname)s %(asctime)s %(module)s %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG", # Good for local dev
+            "class": "logging.StreamHandler",
+            "formatter": "simple", # Or "verbose"
+        },
+        "file": { # Example file handler for production
+            "level": DJANGO_LOG_LEVEL, # Use your defined production log level
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": APPS_DIR.parent / "logs/django_app.log", # Ensure APPS_DIR is defined
+            "maxBytes": 1024 * 1024 * 5,  # 5 MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": { # Django's own loggers
+            "handlers": ["console", "file"], # Adjust handlers as needed for prod/dev
+            "level": "INFO", # Typically INFO for Django's core logs
+            "propagate": False, # Don't pass to root logger if handled here
+        },
+        "landingpage": { # Your app's logger
+            "handlers": ["console", "file"],
+            "level": DJANGO_LOG_LEVEL, # Use your general app log level
+            "propagate": True,
+        },
+        # For other third-party apps, you might want to set their level higher
+        "some_noisy_third_party_app": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        }
+    },
+    # Optional: Root logger configuration
+    # If you want a catch-all for logs not specifically configured.
+    # The Sentry LoggingIntegration effectively acts on the root logger for its event_level.
+    # "root": {
+    #     "handlers": ["console", "file"], # Or just one for production
+    #     "level": DJANGO_LOG_LEVEL,
+    # },
+}
+
+
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
