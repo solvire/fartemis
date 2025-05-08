@@ -1,6 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
-
+import logging
 import ssl
 import os
 from pathlib import Path
@@ -35,6 +35,29 @@ if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
     load_env_from_ssm(f"/{APPLICATION_NAME}/global/secret/", region)
     load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/config/", region)
     load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/secret/", region)
+
+
+DJANGO_SETTINGS_MODULE = env("DJANGO_SETTINGS_MODULE")
+print(f"Env {SSM_ENVIRONMENT} set for module: {DJANGO_SETTINGS_MODULE} ")
+
+
+# sentry setup
+# only need in not local or test
+if DJANGO_SETTINGS_MODULE not in ("config.settings.local", "config.settings.test"):
+    # Sentry settings
+    SENTRY_DSN = env("SENTRY_DSN")
+    # SENTRY_CLIENT = "raven.contrib.django.raven_compat.DjangoClient"
+    SENTRY_CELERY_LOGLEVEL = env.int("SENTRY_LOG_LEVEL", logging.INFO)
+    # RAVEN_CONFIG = {"CELERY_LOGLEVEL": SENTRY_CELERY_LOGLEVEL, "DSN": SENTRY_DSN}
+
+    SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True
+    )
+    SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
+        "DJANGO_SECURE_CONTENT_TYPE_NOSNIFF", default=True
+    )
+
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -339,7 +362,7 @@ CELERY_TASK_TIME_LIMIT = 5 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 60
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#beat-scheduler
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-# https://docs.celeryq.dev/en/stable/userguide/configuration.html#worker-send-task-events
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#worker-send-tsentask-events
 CELERY_WORKER_SEND_TASK_EVENTS = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#std-setting-task_send_sent_event
 CELERY_TASK_SEND_SENT_EVENT = True
