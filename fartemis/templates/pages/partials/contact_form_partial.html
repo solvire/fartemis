@@ -1,0 +1,87 @@
+<!-- /templates/pages/partials/contact_form_partial.html -->
+{% if form_submitted_successfully %}
+    <div id="contact-form-response" class="alert alert-success mt-3" role="alert">
+        Thank you for your message! We'll be in touch soon.
+    </div>
+{% else %}
+    <form hx-post="{% url 'users:contact_submit' %}" hx-target="#contact-form-wrapper" hx-swap="outerHTML">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.level == 40 %} {# Error messages from Django messages framework #}
+                    <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.first_name.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.last_name.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.email.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label for="{{ form.company.id_for_label }}" class="form-label">{{ form.company.label }}</label>
+                {{ form.company }}
+                {% if form.company.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.company.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label for="{{ form.project_type.id_for_label }}" class="form-label">{{ form.project_type.label }}</label>
+                {{ form.project_type }}
+                {% if form.project_type.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.project_type.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label for="{{ form.message.id_for_label }}" class="form-label">{{ form.message.label }}</label>
+                {{ form.message }}
+                {% if form.message.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.message.errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+                {{ form.captcha }}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Request Consultation</button>
+            </div>
+        </div>
+    </form>
+{% endif %}
