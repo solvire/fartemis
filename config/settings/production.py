@@ -199,57 +199,74 @@ sentry_sdk.init(
 
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False, # Important: Sentry relies on this being False
+    "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
             "%(process)d %(thread)d %(name)s.%(funcName)s:%(lineno)s- %(message)s"
         },
-        "simple": { # Added a simple formatter for console during dev
+        "simple": {
             "format": "%(levelname)s %(asctime)s %(module)s %(message)s"
-        }
+        },
+        "django.server": { # Formatter for runserver_plus, if used
+            "()": "django.utils.log.ServerFormatter",
+            "format": "[{server_time}] {message}",
+            "style": "{",
+        },
     },
     "handlers": {
-        "console": {
-            "level": "DEBUG", # Good for local dev
+        "console": { # Good for local development
+            "level": "DEBUG", # Show DEBUG and above locally
             "class": "logging.StreamHandler",
             "formatter": "simple", # Or "verbose"
         },
-        "file": { # Example file handler for production
+        "syslog": {
             "level": DJANGO_LOG_LEVEL, # Use your defined production log level
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": APPS_DIR.parent / "logs/django_app.log", # Ensure APPS_DIR is defined
-            "maxBytes": 1024 * 1024 * 5,  # 5 MB
-            "backupCount": 5,
-            "formatter": "verbose",
+            "class": "logging.handlers.SysLogHandler",
+            # ---- CHOOSE ONE ADDRESS TYPE ----
+            # For Linux systems, typically /dev/log or /var/run/syslog or /var/run/log
+            # Check which one your system's syslog daemon listens on.
+            # '/dev/log' is very common.
+            "address": "/dev/log", # Common for rsyslog/systemd-journald on Linux
+            # OR for network syslog (if sending to another host, or to localhost via UDP/TCP):
+            # "address": ('localhost', 514), # (host, port) tuple for UDP
+            "facility": "local7", # Optional: Syslog facility, see man syslog
+            "formatter": "verbose", # Use your preferred formatter
+            
+        },
+        # If you use runserver_plus, its handler
+        "django.server": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "django.server",
         },
     },
     "loggers": {
-        "django": { # Django's own loggers
-            "handlers": ["console", "file"], # Adjust handlers as needed for prod/dev
-            "level": "INFO", # Typically INFO for Django's core logs
-            "propagate": False, # Don't pass to root logger if handled here
+        "django": {
+            "handlers": ["console", "syslog"], # Send to console (dev) and syslog (prod)
+            "level": "INFO", # Django's core logs usually at INFO
+            "propagate": False,
+        },
+        "django.server": { # Handler for runserver_plus
+            "handlers": ["django.server"],
+            "level": "INFO",
+            "propagate": False,
         },
         "landingpage": { # Your app's logger
-            "handlers": ["console", "file"],
-            "level": DJANGO_LOG_LEVEL, # Use your general app log level
-            "propagate": True,
+            "handlers": ["console", "syslog"],
+            "level": DJANGO_LOG_LEVEL, # Your app's log level
+            "propagate": True, # Allow propagation if needed for Sentry breadcrumbs
         },
-        # For other third-party apps, you might want to set their level higher
-        "some_noisy_third_party_app": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        }
+        # ... other specific app loggers ...
     },
-    # Optional: Root logger configuration
-    # If you want a catch-all for logs not specifically configured.
-    # The Sentry LoggingIntegration effectively acts on the root logger for its event_level.
+    # Optional Root logger (Sentry LoggingIntegration often makes this less critical
+    # for Sentry events, but good for general syslog catch-all if desired)
     # "root": {
-    #     "handlers": ["console", "file"], # Or just one for production
+    #     "handlers": ["syslog"], # Send unhandled logs to syslog
     #     "level": DJANGO_LOG_LEVEL,
-    # },
+    # }
 }
+
 
 
 
