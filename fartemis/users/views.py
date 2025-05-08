@@ -135,7 +135,7 @@ def contact_submit_view(request):
                 logger.info(f"Error sending email: {e}") # Log this
                 # Return the form with a generic error message for HTMX
                 # You can add specific non-field errors to the form if needed
-                form.add_error(None, "Sorry, there was an error sending your message. Please try again.")
+                form.add_error(None, f"Sorry, there was an error sending your message. Please try again. {e}")
                 context = {'form': form, 'form_submitted_successfully': False}
                 return render(request, 'pages/partials/contact_form_partial.html', context)
         else:
