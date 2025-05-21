@@ -36,3 +36,7 @@ pytest-django==4.11.1  # https://github.com/pytest-dev/pytest-django
 
 # for checking for secrets in the code
 detect-secrets
+
+# selenium scraper
+# probably not safe for prod 
+selenium==4.32.0
