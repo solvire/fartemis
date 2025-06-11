@@ -1,0 +1,497 @@
+<!-- case-studies.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="py-5 py-md-7 bg-hero">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold text-white mb-3">Case Studies</h1>
+                <p class="lead text-light opacity-75 mb-4">
+                    Real-world solutions across industries, from nation-state identity platforms to AI-powered biometrics and large-scale data infrastructure.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <button class="btn btn-outline-light btn-sm filter-btn active" data-filter="all">All Projects</button>
+                    <button class="btn btn-outline-light btn-sm filter-btn" data-filter="government">Government & Identity</button>
+                    <button class="btn btn-outline-light btn-sm filter-btn" data-filter="healthcare">Healthcare & Compliance</button>
+                    <button class="btn btn-outline-light btn-sm filter-btn" data-filter="fintech">Financial Services</button>
+                    <button class="btn btn-outline-light btn-sm filter-btn" data-filter="ecommerce">E-commerce & Data</button>
+                    <button class="btn btn-outline-light btn-sm filter-btn" data-filter="infrastructure">Infrastructure & IoT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Government & Identity Section -->
+<section class="py-5 py-md-7 bg-dark" id="government">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary mb-2">Government & Identity</span>
+            <h2 class="display-6 fw-bold">Nation-Scale Identity Solutions</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                Building secure, scalable identity verification systems for governments and financial institutions
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Chivo Wallet Case Study -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="government">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/chivo.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Chivo Wallet - National Digital Wallet">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">Government</span>
+                            <small class="text-muted">2021-2022</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">Chivo Wallet - National Digital Identity</h3>
+                        <p class="text-muted mb-3">
+                            Implemented a nation-state identity platform within one month for a national government, handling millions of users with blockchain-based digital identity and payment systems.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• Presidential staff liaison for rapid deployment</li>
+                                <li>• Blockchain-based identity verification</li>
+                                <li>• Real-time payment processing</li>
+                                <li>• FATF "Travel Rule" compliance</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">Python</span>
+                            <span class="badge bg-secondary">Django</span>
+                            <span class="badge bg-secondary">AWS</span>
+                            <span class="badge bg-secondary">Blockchain</span>
+                            <span class="badge bg-secondary">PostgreSQL</span>
+                        </div>
+                        <a href="{% url 'case_study_chivo_wallet' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Netki Biometrics Case Study -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="government">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/netki_biometrics.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Netki Biometrics Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-info">Identity Verification</span>
+                            <small class="text-muted">2017-2025</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">Netki AI-Powered Biometrics</h3>
+                        <p class="text-muted mb-3">
+                            Scaled AI-powered biometric verification to 250k registrations per hour with 99% accuracy, serving 25M users across global financial institutions.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• 250k new registrations per hour capacity</li>
+                                <li>• 25M users on PostgreSQL database</li>
+                                <li>• 99% accuracy rate (NIST ranked)</li>
+                                <li>• Global team of 30+ engineers</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">TensorFlow</span>
+                            <span class="badge bg-secondary">Python</span>
+                            <span class="badge bg-secondary">AWS</span>
+                            <span class="badge bg-secondary">Computer Vision</span>
+                            <span class="badge bg-secondary">PostgreSQL</span>
+                        </div>
+                        <a href="{% url 'case_study_netki' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Healthcare & Compliance Section -->
+<section class="py-5 py-md-7 bg-black" id="healthcare">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary mb-2">Healthcare & Compliance</span>
+            <h2 class="display-6 fw-bold">HIPAA-Compliant Healthcare Solutions</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                Secure healthcare data management and pharmaceutical delivery systems
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Arete Healthcare Platform -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="healthcare">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/telemed.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Arete Healthcare Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">Healthcare</span>
+                            <small class="text-muted">2015-2017</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">Arete Healthcare Management System</h3>
+                        <p class="text-muted mb-3">
+                            HIPAA-compliant clinic management system for addiction and mental health sectors, serving 1500+ patient hospitals with zero downtime over 9 years.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• 1500+ patient hospital capacity</li>
+                                <li>• 100% DEA compliance audit success</li>
+                                <li>• Zero downtime over 9 years</li>
+                                <li>• FHIR data layer integration</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">HIPAA</span>
+                            <span class="badge bg-secondary">FHIR</span>
+                            <span class="badge bg-secondary">NLP</span>
+                            <span class="badge bg-secondary">Telehealth</span>
+                        </div>
+                        <a href="{% url 'case_study_arete' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Duber -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="healthcare">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/duber_delivery.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="The Duber Pharmaceutical Delivery">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-warning">Pharmaceutical</span>
+                            <small class="text-muted">2016-2017</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">The Duber - HIPAA Cannabis Delivery</h3>
+                        <p class="text-muted mb-3">
+                            Real-time pharmaceutical delivery tracking system with HIPAA compliance for cannabis dispensaries, featuring driver tracking and logistics management.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• Real-time driver tracking</li>
+                                <li>• HIPAA-compliant delivery system</li>
+                                <li>• Cannabis dispensary integration</li>
+                                <li>• Pharmaceutical compliance automation</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">HIPAA</span>
+                            <span class="badge bg-secondary">Real-time Tracking</span>
+                            <span class="badge bg-secondary">Logistics</span>
+                            <span class="badge bg-secondary">Compliance</span>
+                        </div>
+                        <a href="{% url 'case_study_duber' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Financial Services Section -->
+<section class="py-5 py-md-7 bg-dark" id="fintech">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary mb-2">Data Management and Financial Services</span>
+            <h2 class="display-6 fw-bold">KYC/AML & Data Mining Solutions</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                Large-scale data processing and compliance systems for financial institutions
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- KYC/AML Platform -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="fintech">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/onboard_id.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="KYC/AML Compliance Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-info">Compliance</span>
+                            <small class="text-muted">2017-2025</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">KYC/AML Compliance Platform</h3>
+                        <p class="text-muted mb-3">
+                            Automated compliance verification system integrating international sanctions, counter-terrorism, and AML lists for cryptocurrency and traditional finance.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• FATF "Travel Rule" implementation</li>
+                                <li>• International sanctions integration</li>
+                                <li>• Distributed Identity (DID) protocols</li>
+                                <li>• Bitcoin BIP protocol compliance</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">KYC/AML</span>
+                            <span class="badge bg-secondary">FATF</span>
+                            <span class="badge bg-secondary">Blockchain</span>
+                            <span class="badge bg-secondary">Compliance</span>
+                        </div>
+                        <a href="{% url 'case_study_kyc' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LeadFerret Data Mining -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="fintech">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/leadferret_data.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="LeadFerret Data Mining Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">Data Mining</span>
+                            <small class="text-muted">2014-2015</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">LeadFerret Data Mining Platform</h3>
+                        <p class="text-muted mb-3">
+                            Sophisticated data mining platform transforming 50TB+ of unstructured data into normalized business intelligence, with crawler bot swarms covering hundreds of millions of profiles.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• 50TB+ data processing and normalization</li>
+                                <li>• Hundreds of millions of profiles crawled</li>
+                                <li>• HATEOAS public API architecture</li>
+                                <li>• Team of 15 engineers managed</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">Data Mining</span>
+                            <span class="badge bg-secondary">Web Crawling</span>
+                            <span class="badge bg-secondary">API</span>
+                            <span class="badge bg-secondary">Big Data</span>
+                        </div>
+                        <a href="{% url 'case_study_leadferret' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- E-commerce & Data Section -->
+<section class="py-5 py-md-7 bg-black" id="ecommerce">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary mb-2">E-commerce & Data</span>
+            <h2 class="display-6 fw-bold">High-Volume E-commerce Solutions</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                Scalable e-commerce platforms and market research data systems
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- 123inkjets -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="ecommerce">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/123inkjets.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="123inkjets E-commerce Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">E-commerce</span>
+                            <small class="text-muted">2006-2008</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">123inkjets E-commerce Platform</h3>
+                        <p class="text-muted mb-3">
+                            Consolidated three disparate e-commerce companies into unified operations generating $25M in monthly sales with PCI DSS Level 1 compliance.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• $25M monthly sales volume</li>
+                                <li>• PCI DSS Level 1 compliance</li>
+                                <li>• IBM WebSphere Commerce Enterprise</li>
+                                <li>• Real-time business intelligence</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">WebSphere</span>
+                            <span class="badge bg-secondary">PCI DSS</span>
+                            <span class="badge bg-secondary">VMware</span>
+                            <span class="badge bg-secondary">E-commerce</span>
+                        </div>
+                        <a href="{% url 'case_study_123inkjets' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- uSamp Market Research -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="ecommerce">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/usamp_research.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="uSamp Market Research Platform">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-info">Market Research</span>
+                            <small class="text-muted">2010-2014</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">uSamp Market Research Platform</h3>
+                        <p class="text-muted mb-3">
+                            Managed 2.5M+ codebase covering 5 billion datapoints of market research data with distributed AWS infrastructure for user survey matching.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• 5 billion datapoints processed</li>
+                                <li>• 2.5M+ lines of code managed</li>
+                                <li>• Distributed AWS data structures</li>
+                                <li>• Team of 15 US and offshore engineers</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">AWS</span>
+                            <span class="badge bg-secondary">Big Data</span>
+                            <span class="badge bg-secondary">Analytics</span>
+                            <span class="badge bg-secondary">Market Research</span>
+                        </div>
+                        <a href="{% url 'case_study_usamp' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Infrastructure & IoT Section -->
+<section class="py-5 py-md-7 bg-dark" id="infrastructure">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary mb-2">Infrastructure & IoT</span>
+            <h2 class="display-6 fw-bold">Data Centers & IoT Innovation</h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                Large-scale infrastructure and innovative IoT solutions
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Data Tactical Data Center -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="infrastructure">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/data_center.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Data Tactical Data Center">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-warning">Infrastructure</span>
+                            <small class="text-muted">2015-2017</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">DTAC DTLA Data Center</h3>
+                        <p class="text-muted mb-3">
+                            Built data mining and warehousing solutions processing 25TB+ of real-time semi-structured data with NetApp clusters and OpenStack private cloud.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• 25TB+ real-time data processing</li>
+                                <li>• NetApp disc clusters with Dell Blades</li>
+                                <li>• OpenStack and Open Nebula clouds</li>
+                                <li>• LLM wrappers for multiple AI models</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">OpenStack</span>
+                            <span class="badge bg-secondary">NetApp</span>
+                            <span class="badge bg-secondary">LangChain</span>
+                            <span class="badge bg-secondary">Data Mining</span>
+                        </div>
+                        <a href="{% url 'case_study_dtac_datacenter' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scott Tactical Vehicle Systems -->
+            <div class="col-md-6 col-lg-6 case-study-card" data-category="infrastructure">
+                <div class="card border-light bg-dark shadow-sm h-100 overflow-hidden">
+                    <div class="card-img-top position-relative" style="padding-top: 56.25%;">
+                        <img src="{% static 'images/scott_tactical.jpg' %}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" alt="Scott Tactical Vehicle Computer Systems">
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">IoT Innovation</span>
+                            <small class="text-muted">2020-Present</small>
+                        </div>
+                        <h3 class="fs-4 fw-semibold mb-2">Scott Tactical Vehicle Systems</h3>
+                        <p class="text-muted mb-3">
+                            Custom vehicle computer systems with ESP32 chips featuring face unlock technology and integrated IoT sensors for automotive applications.
+                        </p>
+                        <div class="mb-3">
+                            <h6 class="fs-6 fw-semibold mb-2">Key Achievements:</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• ESP32-based face unlock systems</li>
+                                <li>• Custom vehicle computer integration</li>
+                                <li>• IoT sensor networks</li>
+                                <li>• Real-time automotive data processing</li>
+                            </ul>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge bg-secondary">ESP32</span>
+                            <span class="badge bg-secondary">IoT</span>
+                            <span class="badge bg-secondary">Computer Vision</span>
+                            <span class="badge bg-secondary">Automotive</span>
+                        </div>
+                        <a href="{% url 'case_study_scott_tactical' %}" class="btn btn-primary">View Case Study</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact CTA Section -->
+<section class="py-5 py-md-7 bg-hero">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold text-white mb-3">Ready to Discuss Your Project?</h2>
+                <p class="lead text-light opacity-75 mb-4">
+                    Let's explore how our proven expertise can help solve your most complex technical challenges.
+                </p>
+                <a href="{% url 'home' %}#contact" class="btn btn-primary btn-lg px-5">Start a Conversation</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for filtering -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const caseStudyCards = document.querySelectorAll('.case-study-card');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            filterBtns.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            
+            caseStudyCards.forEach(card => {
+                if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+

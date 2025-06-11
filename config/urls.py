@@ -29,6 +29,29 @@ urlpatterns = [
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+
+    ## case studies
+    path("case-studies/", TemplateView.as_view(template_name="pages/case_studies.html"), name="case_studies"),
+    # chivo case study
+    path("case-study-chivo-wallet/", TemplateView.as_view(template_name="pages/case_study_chivo_wallet.html"), name="case_study_chivo_wallet"),
+    # netki case study
+    path("case-study-netki/", TemplateView.as_view(template_name="pages/case_study_netki.html"), name="case_study_netki"),
+    # arete case study
+    path("case-study-arete/", TemplateView.as_view(template_name="pages/case_study_arete.html"), name="case_study_arete"),
+    # case study duber
+    path("case-study-duber/", TemplateView.as_view(template_name="pages/case_study_duber.html"), name="case_study_duber"),
+    # case study KYC
+    path("case-study-kyc/", TemplateView.as_view(template_name="pages/case_study_kyc.html"), name="case_study_kyc"),
+    # case study leadferret
+    path("case-study-leadferret/", TemplateView.as_view(template_name="pages/case_study_leadferret.html"), name="case_study_leadferret"),
+    # case study 123inkjets
+    path("case-study-123inkjets/", TemplateView.as_view(template_name="pages/case_study_123inkjets.html"), name="case_study_123inkjets"),
+    # case study usamp
+    path("case-study-usamp/", TemplateView.as_view(template_name="pages/case_study_usamp.html"), name="case_study_usamp"),
+    # case study dtac datacenter 
+    path("case-study-dtac-datacenter/", TemplateView.as_view(template_name="pages/case_study_dtac_datacenter.html"), name="case_study_dtac_datacenter"),
+    # case study scott tactical
+    path("case-study-scott-tactical/", TemplateView.as_view(template_name="pages/case_study_scott_tactical.html"), name="case_study_scott_tactical"),
 ]
 
 # API URLS
