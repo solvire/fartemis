@@ -1,0 +1,464 @@
+[
+  {
+    "start": 16.85534375,
+    "end": 27.43596875,
+    "speaker": "SPEAKER_01",
+    "duration": 10.580625000000001,
+    "role": "client"
+  },
+  {
+    "start": 26.71034375,
+    "end": 34.034093750000004,
+    "speaker": "SPEAKER_00",
+    "duration": 7.323750000000004,
+    "role": "therapist"
+  },
+  {
+    "start": 34.70909375,
+    "end": 42.92721875,
+    "speaker": "SPEAKER_00",
+    "duration": 8.218125,
+    "role": "therapist"
+  },
+  {
+    "start": 43.65284375,
+    "end": 47.02784375,
+    "speaker": "SPEAKER_01",
+    "duration": 3.375,
+    "role": "client"
+  },
+  {
+    "start": 47.02784375,
+    "end": 55.127843750000004,
+    "speaker": "SPEAKER_00",
+    "duration": 8.100000000000001,
+    "role": "therapist"
+  },
+  {
+    "start": 55.02659375,
+    "end": 65.03346875,
+    "speaker": "SPEAKER_01",
+    "duration": 10.006874999999994,
+    "role": "client"
+  },
+  {
+    "start": 58.064093750000005,
+    "end": 58.469093750000006,
+    "speaker": "SPEAKER_00",
+    "duration": 0.40500000000000114,
+    "role": "therapist"
+  },
+  {
+    "start": 65.26971875000001,
+    "end": 86.71784375,
+    "speaker": "SPEAKER_00",
+    "duration": 21.44812499999999,
+    "role": "therapist"
+  },
+  {
+    "start": 86.71784375,
+    "end": 89.02971875,
+    "speaker": "SPEAKER_01",
+    "duration": 2.3118750000000006,
+    "role": "client"
+  },
+  {
+    "start": 89.02971875,
+    "end": 92.62409375,
+    "speaker": "SPEAKER_00",
+    "duration": 3.5943749999999994,
+    "role": "therapist"
+  },
+  {
+    "start": 92.52284375,
+    "end": 117.53159375000001,
+    "speaker": "SPEAKER_01",
+    "duration": 25.008750000000006,
+    "role": "client"
+  },
+  {
+    "start": 109.83659375,
+    "end": 110.05596875,
+    "speaker": "SPEAKER_00",
+    "duration": 0.21937499999999943,
+    "role": "therapist"
+  },
+  {
+    "start": 117.53159375000001,
+    "end": 144.02534375000002,
+    "speaker": "SPEAKER_00",
+    "duration": 26.493750000000006,
+    "role": "therapist"
+  },
+  {
+    "start": 144.02534375000002,
+    "end": 149.67846875,
+    "speaker": "SPEAKER_01",
+    "duration": 5.653124999999989,
+    "role": "client"
+  },
+  {
+    "start": 149.67846875,
+    "end": 184.64346875,
+    "speaker": "SPEAKER_00",
+    "duration": 34.965,
+    "role": "therapist"
+  },
+  {
+    "start": 184.64346875,
+    "end": 206.47971875000002,
+    "speaker": "SPEAKER_01",
+    "duration": 21.836250000000007,
+    "role": "client"
+  },
+  {
+    "start": 205.63596875000002,
+    "end": 205.78784375,
+    "speaker": "SPEAKER_00",
+    "duration": 0.15187499999998977,
+    "role": "therapist"
+  },
+  {
+    "start": 206.47971875000002,
+    "end": 235.47096875000003,
+    "speaker": "SPEAKER_00",
+    "duration": 28.991250000000008,
+    "role": "therapist"
+  },
+  {
+    "start": 235.47096875000003,
+    "end": 251.89034375000003,
+    "speaker": "SPEAKER_01",
+    "duration": 16.419375000000002,
+    "role": "client"
+  },
+  {
+    "start": 238.82909375000003,
+    "end": 239.21721875000003,
+    "speaker": "SPEAKER_00",
+    "duration": 0.3881250000000023,
+    "role": "therapist"
+  },
+  {
+    "start": 246.57471875000002,
+    "end": 247.08096875,
+    "speaker": "SPEAKER_00",
+    "duration": 0.5062499999999943,
+    "role": "therapist"
+  },
+  {
+    "start": 251.89034375000003,
+    "end": 299.39346875,
+    "speaker": "SPEAKER_00",
+    "duration": 47.50312499999998,
+    "role": "therapist"
+  },
+  {
+    "start": 267.19596875,
+    "end": 267.58409375,
+    "speaker": "SPEAKER_01",
+    "duration": 0.3881250000000023,
+    "role": "client"
+  },
+  {
+    "start": 299.39346875,
+    "end": 302.14409375,
+    "speaker": "SPEAKER_01",
+    "duration": 2.7506250000000136,
+    "role": "client"
+  },
+  {
+    "start": 301.48596875000004,
+    "end": 328.01346875,
+    "speaker": "SPEAKER_00",
+    "duration": 26.527499999999975,
+    "role": "therapist"
+  },
+  {
+    "start": 319.33971875000003,
+    "end": 319.82909375,
+    "speaker": "SPEAKER_01",
+    "duration": 0.48937499999999545,
+    "role": "client"
+  },
+  {
+    "start": 326.47784375000003,
+    "end": 326.57909375,
+    "speaker": "SPEAKER_01",
+    "duration": 0.10124999999999318,
+    "role": "client"
+  },
+  {
+    "start": 327.35534375000003,
+    "end": 327.40596875,
+    "speaker": "SPEAKER_01",
+    "duration": 0.05062499999996817,
+    "role": "client"
+  },
+  {
+    "start": 328.01346875,
+    "end": 344.44971875000005,
+    "speaker": "SPEAKER_01",
+    "duration": 16.43625000000003,
+    "role": "client"
+  },
+  {
+    "start": 344.44971875000005,
+    "end": 384.27471875000003,
+    "speaker": "SPEAKER_00",
+    "duration": 39.82499999999999,
+    "role": "therapist"
+  },
+  {
+    "start": 385.05096875000004,
+    "end": 401.60534375000003,
+    "speaker": "SPEAKER_01",
+    "duration": 16.554374999999993,
+    "role": "client"
+  },
+  {
+    "start": 388.42596875000004,
+    "end": 388.62846875,
+    "speaker": "SPEAKER_00",
+    "duration": 0.20249999999998636,
+    "role": "therapist"
+  },
+  {
+    "start": 401.60534375000003,
+    "end": 422.19284375,
+    "speaker": "SPEAKER_00",
+    "duration": 20.587499999999977,
+    "role": "therapist"
+  },
+  {
+    "start": 421.72034375000004,
+    "end": 426.96846875,
+    "speaker": "SPEAKER_01",
+    "duration": 5.248124999999959,
+    "role": "client"
+  },
+  {
+    "start": 426.96846875,
+    "end": 428.79096875000005,
+    "speaker": "SPEAKER_00",
+    "duration": 1.8225000000000477,
+    "role": "therapist"
+  },
+  {
+    "start": 428.33534375000005,
+    "end": 435.50721875000005,
+    "speaker": "SPEAKER_01",
+    "duration": 7.171875,
+    "role": "client"
+  },
+  {
+    "start": 431.77784375000005,
+    "end": 432.28409375,
+    "speaker": "SPEAKER_00",
+    "duration": 0.5062499999999659,
+    "role": "therapist"
+  },
+  {
+    "start": 435.15284375000005,
+    "end": 459.46971875,
+    "speaker": "SPEAKER_00",
+    "duration": 24.316874999999982,
+    "role": "therapist"
+  },
+  {
+    "start": 459.03096875000006,
+    "end": 460.90409375,
+    "speaker": "SPEAKER_01",
+    "duration": 1.873124999999959,
+    "role": "client"
+  },
+  {
+    "start": 460.29659375000006,
+    "end": 479.66909375000006,
+    "speaker": "SPEAKER_00",
+    "duration": 19.372500000000002,
+    "role": "therapist"
+  },
+  {
+    "start": 467.13096875,
+    "end": 467.92409375000005,
+    "speaker": "SPEAKER_01",
+    "duration": 0.7931250000000318,
+    "role": "client"
+  },
+  {
+    "start": 477.98159375000006,
+    "end": 490.46909375,
+    "speaker": "SPEAKER_01",
+    "duration": 12.487499999999955,
+    "role": "client"
+  },
+  {
+    "start": 481.32284375,
+    "end": 482.14971875000003,
+    "speaker": "SPEAKER_00",
+    "duration": 0.8268750000000296,
+    "role": "therapist"
+  },
+  {
+    "start": 490.03034375000004,
+    "end": 516.8953437499999,
+    "speaker": "SPEAKER_00",
+    "duration": 26.864999999999895,
+    "role": "therapist"
+  },
+  {
+    "start": 516.77721875,
+    "end": 532.1672187500001,
+    "speaker": "SPEAKER_01",
+    "duration": 15.3900000000001,
+    "role": "client"
+  },
+  {
+    "start": 527.4422187499999,
+    "end": 527.64471875,
+    "speaker": "SPEAKER_00",
+    "duration": 0.20250000000010004,
+    "role": "therapist"
+  },
+  {
+    "start": 530.7665937500001,
+    "end": 543.2878437500001,
+    "speaker": "SPEAKER_00",
+    "duration": 12.521250000000009,
+    "role": "therapist"
+  },
+  {
+    "start": 541.3472187500001,
+    "end": 546.47721875,
+    "speaker": "SPEAKER_01",
+    "duration": 5.129999999999882,
+    "role": "client"
+  },
+  {
+    "start": 545.93721875,
+    "end": 566.4740937500001,
+    "speaker": "SPEAKER_00",
+    "duration": 20.53687500000001,
+    "role": "therapist"
+  },
+  {
+    "start": 565.59659375,
+    "end": 565.7990937500001,
+    "speaker": "SPEAKER_01",
+    "duration": 0.20250000000010004,
+    "role": "client"
+  },
+  {
+    "start": 566.4740937500001,
+    "end": 577.29096875,
+    "speaker": "SPEAKER_01",
+    "duration": 10.816874999999982,
+    "role": "client"
+  },
+  {
+    "start": 577.6115937500001,
+    "end": 578.8772187500001,
+    "speaker": "SPEAKER_00",
+    "duration": 1.265625,
+    "role": "therapist"
+  },
+  {
+    "start": 580.04159375,
+    "end": 617.9765937500001,
+    "speaker": "SPEAKER_00",
+    "duration": 37.93500000000017,
+    "role": "therapist"
+  },
+  {
+    "start": 597.52409375,
+    "end": 598.46909375,
+    "speaker": "SPEAKER_01",
+    "duration": 0.9449999999999363,
+    "role": "client"
+  },
+  {
+    "start": 601.97909375,
+    "end": 603.9197187500001,
+    "speaker": "SPEAKER_01",
+    "duration": 1.940625000000182,
+    "role": "client"
+  },
+  {
+    "start": 617.9765937500001,
+    "end": 626.48159375,
+    "speaker": "SPEAKER_01",
+    "duration": 8.504999999999882,
+    "role": "client"
+  },
+  {
+    "start": 626.44784375,
+    "end": 644.9765937500001,
+    "speaker": "SPEAKER_00",
+    "duration": 18.528750000000173,
+    "role": "therapist"
+  },
+  {
+    "start": 644.9765937500001,
+    "end": 648.84096875,
+    "speaker": "SPEAKER_01",
+    "duration": 3.8643749999998818,
+    "role": "client"
+  },
+  {
+    "start": 649.43159375,
+    "end": 671.04846875,
+    "speaker": "SPEAKER_00",
+    "duration": 21.616874999999936,
+    "role": "therapist"
+  },
+  {
+    "start": 671.04846875,
+    "end": 678.4228437500001,
+    "speaker": "SPEAKER_01",
+    "duration": 7.3743750000001,
+    "role": "client"
+  },
+  {
+    "start": 675.53721875,
+    "end": 675.82409375,
+    "speaker": "SPEAKER_00",
+    "duration": 0.2868750000000091,
+    "role": "therapist"
+  },
+  {
+    "start": 677.4609687500001,
+    "end": 688.63221875,
+    "speaker": "SPEAKER_00",
+    "duration": 11.171249999999873,
+    "role": "therapist"
+  },
+  {
+    "start": 687.9740937500001,
+    "end": 690.03284375,
+    "speaker": "SPEAKER_01",
+    "duration": 2.058749999999918,
+    "role": "client"
+  },
+  {
+    "start": 690.03284375,
+    "end": 714.7378437500001,
+    "speaker": "SPEAKER_00",
+    "duration": 24.705000000000155,
+    "role": "therapist"
+  },
+  {
+    "start": 714.7378437500001,
+    "end": 715.1597187500001,
+    "speaker": "SPEAKER_01",
+    "duration": 0.421875,
+    "role": "client"
+  },
+  {
+    "start": 718.46721875,
+    "end": 718.99034375,
+    "speaker": "SPEAKER_01",
+    "duration": 0.5231249999999363,
+    "role": "client"
+  }
+]

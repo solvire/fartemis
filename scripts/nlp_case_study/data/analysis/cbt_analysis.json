@@ -1,0 +1,95 @@
+{
+  "session_id": "1fccbf78-8454-4656-8c77-c7abcd195083",
+  "analysis_timestamp": "2025-06-11T10:05:31.520336",
+  "chapters_analysis": [
+    {
+      "start": 16.8,
+      "end": 86.26,
+      "duration": 69.46,
+      "summary": "Hannah was referred to me by her GP because she was experiencing anxiety difficulties. Has just recently moved out from living with her parents. How has that changed things for her? Hopefully this is it.",
+      "headline": "Hannah was referred to me by her GP because she was experiencing anxiety difficulties",
+      "detected_phase": "problem_identification",
+      "phase_description": "Identifying specific issues to address"
+    },
+    {
+      "start": 86.66,
+      "end": 143.8,
+      "duration": 57.14,
+      "summary": "Just recently you moved out of home for the first time. How did that change things? I thought that they'd be better because I thought I'd have to kind of be independent, but it's actually a lot worse. Hopefully it will help.",
+      "headline": "You recently moved out of home for the first time and experienced anxiety",
+      "detected_phase": "thought_exploration",
+      "phase_description": "Exploring thought patterns and cognitions"
+    },
+    {
+      "start": 144.44,
+      "end": 298.17,
+      "duration": 153.73,
+      "summary": "Photographer says anxiety is stopping him from getting work and making him more isolated. Also feels like it's stunting his ability to make new friends and meet new people. First noticed the anxiety kicking in about five or six years ago.",
+      "headline": "Your anxiety is stopping you from taking up certain types of work",
+      "detected_phase": "emotion_identification",
+      "phase_description": "Identifying and validating emotions"
+    },
+    {
+      "start": 298.49,
+      "end": 384.15,
+      "duration": 85.66,
+      "summary": "When I have to kind of be working with other people, I don't like that. I feel like everyone's kind of looking at me and thinking that I'm just, like, really stupid. That's why I like doing shots where it's just me and the camera.",
+      "headline": "What kind of work is most difficult for you in your job",
+      "detected_phase": "thought_exploration",
+      "phase_description": "Exploring thought patterns and cognitions"
+    },
+    {
+      "start": 384.95,
+      "end": 565.86,
+      "duration": 180.91,
+      "summary": "Photographer describes how social anxiety kicked in during a recent job. He says he felt really hot and sweaty and tried to focus on the camera. Says he felt like everyone was looking at him and thought everyone was thinking he was stupid.",
+      "headline": "Social anxiety can kick in when you're in stressful situations",
+      "detected_phase": "thought_exploration",
+      "phase_description": "Exploring thought patterns and cognitions"
+    },
+    {
+      "start": 566.18,
+      "end": 715.28,
+      "duration": 149.1,
+      "summary": "I just felt like everyone was looking at me and just they could tell. I was really red and just wishing that I just wasn't there. I tried really hard to just focus and look down, not try. Not look at anyone else. I just wanted to get home straight away.",
+      "headline": "You said that you worried that everyone's looking at you during shoot",
+      "detected_phase": "behavioral_analysis",
+      "phase_description": "Examining behavioral patterns"
+    }
+  ],
+  "therapeutic_techniques": {
+    "socratic_questioning": 15,
+    "validation": 1,
+    "reframing": 0,
+    "psychoeducation": 0,
+    "homework_assignment": 0,
+    "summarizing": 0,
+    "empathy_statements": 5
+  },
+  "session_metrics": {
+    "speaking_ratio": {
+      "therapist": 0.31457687195392114,
+      "client": 0.6854231280460789
+    },
+    "therapist_question_ratio": 0.6,
+    "average_utterance_length": {
+      "therapist": 20.285714285714285,
+      "client": 45.5
+    },
+    "sentiment_distribution": {
+      "positive": 0,
+      "negative": 0,
+      "neutral": 0
+    },
+    "total_utterances": 69,
+    "session_duration_minutes": 11.921333333333333
+  },
+  "clinical_insights": [
+    {
+      "type": "validation",
+      "severity": "low",
+      "insight": "Limited validation statements observed.",
+      "recommendation": "Increase validation to strengthen therapeutic alliance."
+    }
+  ]
+}
