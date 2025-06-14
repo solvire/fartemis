@@ -13,7 +13,11 @@ License: MIT
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
 
-## 🧠 Therapy Session Analyzer
+## Case Studies and Demos
+
+Browse through some of the items we have chosen to showcase. Feedback or questions are welcome.
+
+### 🧠 Therapy Session Analyzer
 
 **AI-powered mental health documentation assistant**
 
