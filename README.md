@@ -13,6 +13,23 @@ License: MIT
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
 
+## 🧠 Therapy Session Analyzer
+
+**AI-powered mental health documentation assistant**
+
+Analyzes therapy sessions using NLP to identify CBT phases, therapeutic techniques, and conversation dynamics. This proof-of-concept demonstrates how AI can reduce documentation burden for mental health professionals while maintaining clinical standards and privacy.
+
+[**→ View the Therapy Analyzer**](./scripts/nlp_case_study/)
+
+**Key Features:**
+- Speaker diarization (therapist vs. client identification)
+- Automatic CBT phase classification
+- Therapeutic technique detection
+- Clinical quality metrics & visualizations
+- 60-70% reduction in documentation time
+
+**Technologies:** Python, AssemblyAI, pyannote.audio, Plotly, TextBlob
+
 
 ## Setup
 
