@@ -7,6 +7,7 @@ from django.db import models
 from django.conf import settings
 
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from fartemis.companies.models import CompanyProfile, UserCompanyAssociation
@@ -213,3 +214,23 @@ class UserContactMethod(BaseIntModel):
                 is_primary=True
             ).update(is_primary=False)
         super().save(*args, **kwargs)
+
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    content = models.TextField()
+    published_date = models.DateTimeField(auto_now_add=True)
+    # You could add more fields like an author, category, etc.
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('article_detail', kwargs={'slug': self.slug})

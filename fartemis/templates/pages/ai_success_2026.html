@@ -1,0 +1,1066 @@
+
+<!-- dtac/templates/pages/ai_success_2026_revised.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Custom styles for this page */
+    .hero-gradient {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        position: relative;
+        overflow: hidden;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+    }
+    
+    .hero-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    }
+    
+    /* Smooth scroll chevron */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: pointer;
+        z-index: 10;
+        animation: bounce 2s infinite;
+    }
+    
+    .scroll-indicator .chevron {
+        width: 35px;
+        height: 35px;
+        border-right: 3px solid rgba(255, 255, 255, 0.5);
+        border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+        transform: rotate(45deg);
+        transition: all 0.3s ease;
+    }
+    
+    .scroll-indicator:hover .chevron {
+        border-color: #667eea;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+        40% { transform: translateX(-50%) translateY(-10px); }
+        60% { transform: translateX(-50%) translateY(-5px); }
+    }
+    
+    .section-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 80px 0;
+        position: relative;
+    }
+    
+    .strategy-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .strategy-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .strategy-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .feature-box {
+        background: rgba(255, 255, 255, 0.03);
+        border-left: 3px solid #667eea;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .timeline-week {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-week:hover {
+        background: rgba(102, 126, 234, 0.15);
+        transform: translateX(10px);
+    }
+    
+    .week-number {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+
+
+/*
+ *  New, Lighter Timeline Styles
+ */
+.timeline-phase {
+    background: rgba(102, 126, 234, 0.05); /* Lighter background */
+    border-left: 3px solid #667eea; /* Accent border */
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0 8px 8px 0;
+    transition: all 0.3s ease;
+}
+
+.timeline-phase:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(10px); /* Subtle hover effect */
+    border-color: #764ba2;
+}
+
+.phase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.phase-title {
+    color: #ffffff;
+    font-weight: 600;
+    margin: 0;
+}
+
+.phase-duration {
+    background: rgba(255, 255, 255, 0.1);
+    color: #adb5bd;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+
+    /* Image placeholder styles */
+.image-placeholder {
+    /* --- Container Styles --- */
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px; /* This creates the rounded corners for the border */
+    margin: 2rem 0;
+    
+    /* --- Key Changes --- */
+    padding: 0; /* Set padding to 0 to remove the space around the image */
+    overflow: hidden; /* Ensures the image respects the container's rounded corners */
+}
+
+.image-placeholder img {
+    /* --- Image Styles --- */
+    display: block; /* Removes any extra space that can appear under images */
+    width: 100%;
+    border-radius: 12px; /* This rounds the corners of the image itself */
+}
+    
+    /* Terminal-style Kidecon widget */
+    .kidecon-terminal-showcase {
+        width: 100%;
+        max-width: 700px; /* Control the max width */
+        height: 350px;
+        background: #0a0a0a;
+        border: 2px solid #00ff00;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 20px rgba(0, 255, 0, 0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        font-family: 'Courier New', monospace;
+        margin: 2rem auto 0; /* Center it */
+    }
+    
+    .kidecon-terminal-header {
+        background: #000;
+        border-bottom: 1px solid #00ff00;
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .kidecon-terminal-title {
+        color: #00ff00;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: normal;
+    }
+    
+.kidecon-terminal-body {
+    padding: 1rem; /* This provides the space from the edge */
+    height: calc(100% - 40px);
+    overflow-y: auto;
+    background: #0a0a0a;
+    text-align: left; /* This is the fix */
+}
+    
+    .terminal-line {
+        color: #00ff00;
+        margin-bottom: 0.75rem;
+        font-size: 14px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .terminal-prompt {
+        color: #00ff00;
+        margin-right: 0.5rem;
+    }
+    
+    /* Typewriter effect */
+    .typing {
+        overflow: hidden;
+        white-space: nowrap;
+        animation: typing 2s steps(40, end);
+    }
+    
+    @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    
+    /* Blinking cursor */
+    .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 16px;
+        background: #00ff00;
+        animation: blink 1s infinite;
+        margin-left: 2px;
+    }
+    
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+    
+    /* Terminal glow effect */
+    .terminal-glow {
+        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+    }
+    
+    /* Scrollbar styling for terminal */
+    .kidecon-terminal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .kidecon-terminal-body::-webkit-scrollbar-track {
+        background: #000;
+    }
+    
+    .kidecon-terminal-body::-webkit-scrollbar-thumb {
+        background: #00ff00;
+        border-radius: 4px;
+    }
+    
+    .kidecon-terminal-body::-webkit-scrollbar-thumb:hover {
+        background: #00cc00;
+    }
+    
+    .case-study-highlight {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-left: 4px solid #667eea;
+        padding: 2rem;
+        border-radius: 8px;
+        margin: 2rem 0;
+    }
+    
+    .metric-badge {
+        display: inline-block;
+        background: rgba(40, 167, 69, 0.2);
+        border: 1px solid rgba(40, 167, 69, 0.5);
+        color: #28a745;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+
+/*
+ * SIMPLE AI WORKFLOW DIAGRAM
+ */
+
+.simple-workflow-diagram {
+    /* The faint border and container styling */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin: 3rem auto;
+    max-width: 900px; /* Control the max width */
+}
+
+/* Container for the main AI icon */
+.ai-icon-container {
+    text-align: center;
+    margin-bottom: 2.5rem; /* Space between AI icon and the tool logos */
+}
+
+.ai-icon-container img {
+    height: 80px; /* Size of the AI icon */
+    width: auto;
+}
+
+/* Flex container for the row of tool logos */
+.tool-icons-row {
+    display: flex;
+    justify-content: space-around; /* Evenly space the logos */
+    align-items: center;
+    flex-wrap: wrap; /* Allows icons to wrap on smaller screens */
+    gap: 2rem; /* Consistent spacing between icons */
+}
+
+.tool-icons-row img {
+    height: 40px; /* Uniform height for all tool logos */
+    width: auto;
+    opacity: 0.7; /* Softens the logos to look more integrated */
+    transition: all 0.2s ease-in-out;
+}
+
+/* A subtle hover effect for a touch of interactivity */
+.tool-icons-row img:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+
+
+/*
+ *  New Calendly Booking Section Styles
+ */
+
+#calendly-booking-section {
+    background-color: #f8f9fa; /* A soft, clean light gray */
+    padding: 80px 0;
+}
+
+/* Add a subtle shadow and border to the widget to lift it off the page */
+#calendly-booking-section .calendly-inline-widget {
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden; /* This is important for the border-radius to apply correctly */
+}
+</style>
+
+<!-- Hero Section -->
+<section class="hero-gradient" id="hero">
+    <div class="container position-relative">
+        <div class="row">
+            <div class="col-lg-10 mx-auto text-center">
+                <span class="badge bg-primary bg-opacity-25 border border-primary mb-3">2026 READINESS GUIDE</span>
+                <br /><br />
+                <h1 class="display-3 fw-bold mb-4">
+                    3 Things Winning Startups Are Doing for 
+                    <span class="text-primary">AI-Driven Success</span>
+                </h1>
+                <p class="lead fs-4 text-muted">
+                    While others debate if AI is ready for production, companies are shipping 
+                    <strong class="text-white">secure systems in 3 weeks.</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('strategies')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- The 3 Strategies Overview -->
+<section class="section-wrapper bg-dark bg-opacity-50" id="strategies">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-12 text-center">
+                <h2 class="display-5 mb-4">The 3 Critical AI Strategies</h2>
+                <p class="lead text-muted">Transform your development process with enhanced innovation</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Strategy 1 -->
+            <div class="col-md-4">
+                <div class="card strategy-card border-0 p-4">
+                    <div class="card-body">
+                        <div class="strategy-number">1</div>
+                        <h3 class="h4 text-center mb-3">AI Enhanced Software Development Lifecycle</h3>
+                        <p class="text-muted mb-4">
+                            Move beyond simple code completion to AI-driven architecture, security-first development, 
+                            and quality assurance that catches issues before they reach production.
+                        </p>
+                        <a href="#strategy1" onclick="scrollToSection('strategy1'); return false;" class="btn btn-sm btn-outline-primary w-100">Learn More →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Strategy 2 -->
+            <div class="col-md-4">
+                <div class="card strategy-card border-0 p-4">
+                    <div class="card-body">
+                        <div class="strategy-number">2</div>
+                        <h3 class="h4 text-center mb-3">Business Administration Workflow Engines</h3>
+                        <p class="text-muted mb-4">
+                            Automate entire business processes with AI that understands your tools, compliance requirements, 
+                            and can execute complex multi-step workflows autonomously.
+                        </p>
+                        <a href="#strategy2" onclick="scrollToSection('strategy2'); return false;" class="btn btn-sm btn-outline-primary w-100">Learn More →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Strategy 3 -->
+            <div class="col-md-4">
+                <div class="card strategy-card border-0 p-4">
+                    <div class="card-body">
+                        <div class="strategy-number">3</div>
+                        <h3 class="h4 text-center mb-3">Context-Aware Customer Experience</h3>
+                        <p class="text-muted mb-4">
+                            Deploy AI that truly understands your customers' context, anticipates needs, 
+                            and delivers personalized experiences that feel human, not robotic.
+                        </p>
+                        <a href="#strategy3" onclick="scrollToSection('strategy3'); return false;" class="btn btn-sm btn-outline-primary w-100">Learn More →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('strategy1')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- Strategy 1: Generative AI Enhanced Coding -->
+<section class="section-wrapper" id="strategy1">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="text-center mb-5">
+                    <div class="strategy-number mb-3">1</div>
+                    <h2 class="display-5">Generative AI Enhanced Coding Lifecycle</h2>
+                    <p class="lead text-muted">Beyond autocomplete: AI that architects, secures, and validates</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="feature-box">
+                            <h4 class="text-primary mb-3">Quality-First Development</h4>
+                            <p class="text-muted">
+                                AI doesn't just write code—it writes <strong class="text-white">production-ready, tested code</strong>. 
+                                Our systems generate unit tests alongside implementation, ensuring 90%+ coverage from day one.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-box">
+                            <h4 class="text-primary mb-3">Vibe Coding Revolution</h4>
+                            <p class="text-muted">
+                                Describe what you want to build in natural language. Watch AI transform your vision into 
+                                working prototypes in minutes, not days. Perfect for rapid iteration with stakeholders.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="feature-box">
+                            <h4 class="text-primary mb-3">Security by Design</h4>
+                            <p class="text-muted">
+                                Every line of AI-generated code passes through security linting, vulnerability scanning, 
+                                and compliance checks. <strong class="text-white">OWASP Top 10 protection built-in</strong>.
+                            </p>
+                        </div>
+                        
+                        <div class="feature-box">
+                            <h4 class="text-primary mb-3">Architecture Intelligence</h4>
+                            <p class="text-muted">
+                                AI understands design patterns, microservices, and scalability. It suggests optimal 
+                                architectures based on your requirements and automatically maintains consistency.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="image-placeholder mt-5">
+                    <img src="{% static 'images/ai_dev_lifecycle_diagram.png' %}" alt="AI Development Lifecycle Diagram" class="img-fluid" />
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-lg-12 text-center">
+                        <p class="lead text-muted mb-4">
+                            Companies using our AI-enhanced coding lifecycle report:
+                        </p>
+                        <span class="metric-badge">75% fewer bugs in production</span>
+                        <span class="metric-badge">4x faster feature delivery</span>
+                        <span class="metric-badge">90% test coverage maintained</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('strategy2')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- Strategy 2: Business Workflow Engines with Case Study -->
+<section class="section-wrapper bg-dark bg-opacity-50" id="strategy2">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="text-center mb-5">
+                    <div class="strategy-number mb-3">2</div>
+                    <h2 class="display-5">Business Administration Workflow Engines</h2>
+                    <p class="lead text-muted">AI that runs your business processes, not just assists with them</p>
+                </div>
+                
+                <div class="row mb-5">
+                    <div class="col-lg-6">
+                        <h4 class="mb-4">Accelerate Every Workflow</h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <strong class="text-primary">→ Automated Documentation:</strong>
+                                <span class="text-muted"> AI generates reports, proposals, and compliance docs in your voice</span>
+                            </li>
+                            <li class="mb-3">
+                                <strong class="text-primary">→ Tool Integration:</strong>
+                                <span class="text-muted"> Connect Slack, Jira, Salesforce, and 100+ tools with AI orchestration</span>
+                            </li>
+                            <li class="mb-3">
+                                <strong class="text-primary">→ Process Mining:</strong>
+                                <span class="text-muted"> AI identifies bottlenecks and suggests optimizations automatically</span>
+                            </li>
+                            <li class="mb-3">
+                                <strong class="text-primary">→ Compliance Automation:</strong>
+                                <span class="text-muted"> HIPAA, SOC 2, GDPR workflows executed flawlessly every time</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="case-study-highlight">
+                            <h4 class="text-white mb-3">Real Success: TeleHealth Innovation</h4>
+                            <p class="text-muted mb-3">
+                                A telehealth startup transformed their practice with our AI workflow engine:
+                            </p>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">✓ <strong>Live transcription</strong> of therapy sessions</li>
+                                <li class="mb-2">✓ <strong>Automated CBT phase detection</strong> and analysis</li>
+                                <li class="mb-2">✓ <strong>Instant report generation</strong> for insurance</li>
+                                <li class="mb-2">✓ <strong>60% reduction</strong> in documentation time</li>
+                            </ul>
+                            <p class="mt-3 mb-0">
+                                <a href="https://dtac.substack.com/p/an-unconscious-algorithm-ai-psychoanalysis" 
+                                   target="_blank" class="btn btn-sm btn-outline-primary">
+                                    Read the Full Case Study →
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+<!-- Simple AI Workflow Diagram -->
+<div class="simple-workflow-diagram">
+    <!-- Central AI Icon -->
+    <div class="ai-icon-container">
+        <img src="{% static '/images/icons/ai-platform-svgrepo-com.svg' %}" alt="AI Orchestrator Core">
+    </div>
+
+    <!-- Row of Tool Icons -->
+    <div class="tool-icons-row">
+        <img src="{% static '/images/icons/salesforce-2-logo-svgrepo-com.svg' %}" alt="Salesforce">
+        <img src="{% static '/images/icons/slack-svgrepo-com.svg' %}" alt="Slack">
+        <img src="{% static '/images/icons/jira-svgrepo-com.svg' %}" alt="Jira">
+        <img src="{% static '/images/icons/dropbox-color-svgrepo-com.svg' %}" alt="Dropbox">
+        <img src="{% static '/images/icons/google-logo-drive-new-svgrepo-com.svg' %}" alt="Google Drive">
+        <img src="{% static '/images/icons/ms-outlook-svgrepo-com.svg' %}" alt="Outlook">
+        <img src="{% static '/images/icons/office-1-logo-svgrepo-com.svg' %}" alt="Microsoft Office">
+        <img src="{% static '/images/icons/sms-svgrepo-com.svg' %}" alt="SMS Messaging">
+    </div>
+</div>
+                
+                <div class="row mt-5">
+                    <div class="col-lg-12">
+                        <h4 class="text-center mb-4">Transform Your Business Operations</h4>
+                        <p class="text-center text-muted">
+                            Our AI workflow engines don't just automate tasks—they understand context, make decisions, 
+                            and continuously improve your processes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('strategy3')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- Strategy 3: Context-Aware Customer Experience -->
+<section class="section-wrapper" id="strategy3">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="text-center mb-5">
+                    <div class="strategy-number mb-3">3</div>
+                    <h2 class="display-5">Context-Aware Customer Experience</h2>
+                    <p class="lead text-muted">AI that understands your customers better than they understand themselves</p>
+                </div>
+                
+                <div class="row mb-5">
+                    <div class="col-lg-12">
+                        <h4 class="mb-4">Beyond Basic Chatbots</h4>
+                        <p class="lead text-muted mb-4">
+                            Modern AI creates experiences that feel magical—understanding context, 
+                            anticipating needs, and delivering value at every touchpoint.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="feature-box">
+                            <h5 class="text-white mb-3">Intelligent Onboarding</h5>
+                            <p class="text-muted">
+                                AI guides each user through a personalized journey, adapting in real-time 
+                                based on their behavior, preferences, and goals.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="feature-box">
+                            <h5 class="text-white mb-3">Predictive Support</h5>
+                            <p class="text-muted">
+                                Identify and resolve issues before customers even notice them. 
+                                AI monitors usage patterns and proactively offers solutions.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="feature-box">
+                            <h5 class="text-white mb-3">Conversation Memory</h5>
+                            <p class="text-muted">
+                                Every interaction builds on the last. AI remembers preferences, 
+                                past issues, and context across all channels.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="feature-box">
+                            <h5 class="text-white mb-3">Behavioral Intelligence</h5>
+                            <p class="text-muted">
+                                Understand not just what customers do, but why. AI analyzes patterns 
+                                to optimize every aspect of the user journey.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="image-placeholder mt-5">
+                    <img src="{% static 'images/user_journey.jpg' %}" alt="User Journey Visualization" class="img-fluid" />
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-lg-12 text-center">
+                        <h4 class="mb-4">Resources & Further Reading</h4>
+                        <p class="text-muted mb-4">
+                            Dive deeper into context-aware AI implementation:
+                        </p>
+                        <div>
+                            <a href="#" class="btn btn-sm btn-outline-secondary me-2 mb-2">
+                                The Psychology of AI Interactions
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary me-2 mb-2">
+                                Building Trust Through AI
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-secondary mb-2">
+                                Context Modeling Best Practices
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('kidecon-showcase')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- Kidecon Showcase Section -->
+<section class="section-wrapper bg-dark bg-opacity-50" id="kidecon-showcase">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto text-center">
+                <h2 class="display-5 mb-3">See It In Action: Kidecon</h2>
+                <p class="lead text-muted mb-5">
+                    Our context-aware AI revolutionizes financial education for families. 
+                    Watch how it works.
+                </p>
+
+                <!-- Terminal -->
+                <div class="kidecon-terminal-showcase" id="kideconTerminal">
+                    <div class="kidecon-terminal-header">
+                        <span class="kidecon-terminal-title terminal-glow">KIDECON_AI v1.0</span>
+                    </div>
+                    <div class="kidecon-terminal-body" id="terminalBody">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span><span id="line1"></span><span class="cursor" id="cursor1"></span>
+                        </div>
+                    </div>
+                </div>
+                 <p class="mt-4 mb-0">
+                    <a href="https://kidecon.me" target="_blank" class="btn btn-sm btn-outline-primary">
+                        Explore Kidecon →
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('transformation')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+
+<!-- Real Transformation Section (Revised) -->
+<section class="section-wrapper bg-dark bg-opacity-50" id="transformation">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="text-center mb-5">
+                    <h2 class="display-5">From Zero to 10K Users in 90 Days</h2>
+                    <p class="lead text-muted">How we took a fintech startup from prototype to a successful public launch.</p>
+                </div>
+                
+                <div class="case-study-highlight mb-5">
+                    <h4 class="text-white mb-3">The Challenge</h4>
+                    <p class="text-muted">
+                        A crypto/blockchain startup came to us with 3 months until launch, a bare-bones prototype, and requirements for massive scale. Here's how we delivered.
+                    </p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h4 class="mb-4 text-center">The 5-Phase Sprint</h4>
+                        
+                        <!-- Phase 1 -->
+                        <div class="timeline-phase">
+                            <div class="phase-header">
+                                <h5 class="phase-title">Phase 1: Foundation & Strategy</h5>
+                                <span class="phase-duration">Weeks 1-2</span>
+                            </div>
+                            <p class="text-muted">
+                                Conducted a comprehensive business and tech assessment, leading to a scalable Django architecture proposal designed for success from day one.
+                            </p>
+                        </div>
+                        
+                        <!-- Phase 2 -->
+                        <div class="timeline-phase">
+                            <div class="phase-header">
+                                <h5 class="phase-title">Phase 2: Execution & Scaling</h5>
+                                <span class="phase-duration">Weeks 3-5</span>
+                            </div>
+                            <p class="text-muted">
+                                Instantly scaled the team with 10+ senior engineers, began shipping production code, and delivered React Native mobile apps with ML biometrics integration.
+                            </p>
+                        </div>
+                        
+                        <!-- Phase 3 -->
+                        <div class="timeline-phase">
+                            <div class="phase-header">
+                                <h5 class="phase-title">Phase 3: Infrastructure & Integration</h5>
+                                <span class="phase-duration">Weeks 6-9</span>
+                            </div>
+                            <p class="text-muted">
+                                Built out scalable AWS staging and production environments while integrating international partners and key business stakeholders for platform testing.
+                            </p>
+                        </div>
+
+                        <!-- Phase 4 -->
+                        <div class="timeline-phase">
+                            <div class="phase-header">
+                                <h5 class="phase-title">Phase 4: Beta Testing & Compliance</h5>
+                                <span class="phase-duration">Weeks 10-12</span>
+                            </div>
+                            <p class="text-muted">
+                                Announced a public beta to gather user feedback and achieved formal compliance signoff from all legal stakeholders and attorneys.
+                            </p>
+                        </div>
+
+                        <!-- Phase 5 -->
+                        <div class="timeline-phase">
+                            <div class="phase-header">
+                                <h5 class="phase-title">Phase 5: Launch & Scale</h5>
+                                <span class="phase-duration">Weeks 13-15</span>
+                            </div>
+                            <p class="text-muted">
+                                Implemented QA automation and final enhancements, culminating in a successful public launch with 10,000 users on day one.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results section remains the same -->
+                <div class="row mt-5">
+                    <div class="col-lg-12">
+                        <h4 class="text-center mb-4">The Results</h4>
+                        <div class="row g-4">
+                            <div class="col-md-3 text-center">
+                                <h2 class="text-primary">0 → 10K</h2>
+                                <p class="text-muted">Users on Launch Day</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h2 class="text-primary">15+</h2>
+                                <p class="text-muted">Engineers Deployed</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h2 class="text-primary">3 Months</h2>
+                                <p class="text-muted">From Zero to Launch</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h2 class="text-primary">100%</h2>
+                                <p class="text-muted">Compliance Achieved</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info bg-info bg-opacity-10 border-info mt-5">
+                    <h5 class="alert-heading">What Made This Possible</h5>
+                    <p class="mb-0">
+                        This transformation succeeded through our proven assessment framework and AI-enhanced development. We delivered what traditionally takes over a year in just 15 weeks.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator" onclick="scrollToSection('cta')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- CTA Section (Dark Theme) -->
+<section class="section-wrapper bg-primary bg-opacity-10 border-top border-primary" id="cta">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto text-center">
+                <h2 class="display-4 mb-4">Apply for Your AI Strategy Session</h2>
+                <p class="lead mb-4">
+                    The gap between AI-powered companies and everyone else widens daily. 
+                    We partner with 5 select clients per quarter to build their decisive advantage.
+                </p>
+                <p class="h5 text-muted mb-5">
+                    This isn't a sales call. It's a 30-minute workshop to build your custom AI roadmap.
+                </p>
+                
+                <!-- This button will now reveal and scroll to the section below -->
+                <button id="showCalendlyBtn" class="btn btn-primary btn-lg px-5 py-3 mb-4">
+                    Book Your AI Strategy Session
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Calendly Booking Section (Light Theme - Initially Hidden) -->
+<section id="calendly-booking-section" style="display: none;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- 
+                  The Calendly widget. We removed the dark theme parameters
+                  and added a primary_color to match your brand.
+                -->
+                <div class="calendly-inline-widget" 
+                     data-url="https://calendly.com/stevenjscott/ai-strategy-session?primary_color=667eea&hide_gdpr_banner=1"
+                     style="min-width:320px; height:950px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+    // =========================================================================
+    // Global Function Declarations & Variables
+    // These define the functions but don't run them until called.
+    // =========================================================================
+
+    // Smooth scroll utility function
+    function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+    
+    // --- Terminal Typewriter Logic ---
+    const messages = [
+        "INITIALIZING KIDECON AI...",
+        "SYSTEM READY.",
+        "Hello! I help families create smart contracts.",
+        "Kids earn tokens by completing tasks.",
+        "Parents maintain full control and oversight.",
+        "Financial literacy through gamification.",
+        "Context-aware AI remembers every interaction.",
+        "Visit kidecon.me to learn more.",
+        "This is the future of family finance."
+    ];
+    
+    let messageIndex = 0;
+    let charIndex = 0;
+    let currentLine = 1;
+    let isTyping = false;
+    
+    function typeMessage() {
+        if (isTyping) return;
+        if (messageIndex >= messages.length) messageIndex = 2;
+        
+        const message = messages[messageIndex];
+        const lineElement = document.getElementById(`line${currentLine}`);
+        const cursorElement = document.getElementById(`cursor${currentLine}`);
+        
+        if (!lineElement) return;
+        
+        isTyping = true;
+        
+        const typeChar = () => {
+            if (charIndex < message.length) {
+                lineElement.textContent += message[charIndex];
+                charIndex++;
+                setTimeout(typeChar, 50 + Math.random() * 30);
+            } else {
+                setTimeout(() => {
+                    if (cursorElement) cursorElement.style.display = 'none';
+                    
+                    const terminalBody = document.getElementById('terminalBody');
+                    if (terminalBody) {
+                        currentLine++;
+                        const newLine = document.createElement('div');
+                        newLine.className = 'terminal-line';
+                        newLine.innerHTML = `<span class="terminal-prompt">$</span><span id="line${currentLine}"></span><span class="cursor" id="cursor${currentLine}"></span>`;
+                        terminalBody.appendChild(newLine);
+                        terminalBody.scrollTop = terminalBody.scrollHeight;
+                    }
+                    
+                    charIndex = 0;
+                    messageIndex++;
+                    isTyping = false;
+                    setTimeout(typeMessage, 1000);
+                }, 1500);
+            }
+        };
+        typeChar();
+    }
+
+
+    // =========================================================================
+    // Main Execution Block
+    // This runs after the entire page is loaded to prevent errors.
+    // =========================================================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+    
+        // --- Calendly "Reveal and Scroll" Logic ---
+        const showBtn = document.getElementById('showCalendlyBtn');
+        const bookingSection = document.getElementById('calendly-booking-section');
+        let isCalendlyLoaded = false;
+
+        if (showBtn && bookingSection) {
+            showBtn.addEventListener('click', function() {
+                // On the first click, reveal the section and load the script
+                if (!isCalendlyLoaded) {
+                    bookingSection.style.display = 'block';
+                    showBtn.textContent = 'Scroll to Booking Calendar';
+                    isCalendlyLoaded = true;
+
+                    // Dynamically load Calendly's main script
+                    const script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+                    script.async = true;
+                    document.body.appendChild(script);
+                }
+
+                // For every click (including the first), scroll down to the booking section
+                setTimeout(() => {
+                    bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100); // Small delay to ensure the section is visible before scrolling
+            });
+        }
+
+        // --- Intersection Observer for Fade-in Animations ---
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target); // Optional: stop observing after it's visible
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.feature-box, .timeline-week').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(el);
+        });
+
+        // --- Start Terminal Animation ---
+        // We wait 2 seconds after the page is loaded to begin typing
+        setTimeout(() => {
+            typeMessage();
+        }, 2000);
+
+    }); // End of DOMContentLoaded
+</script>
+
+
+<!-- IMPORTANT: Keep this separate script tag exactly as it is -->
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+{% endblock %}

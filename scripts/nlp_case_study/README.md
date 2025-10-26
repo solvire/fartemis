@@ -14,6 +14,13 @@ This project demonstrates how Natural Language Processing (NLP) and machine lear
 - Generate quality metrics and visualizations
 - Provide actionable insights for therapists
 
+## Source Video 
+
+You can find the source video here: 
+
+    https://www.youtube.com/watch?v=XH2tF8oB3cw
+
+
 ## 🏗️ Architecture
 
 ```

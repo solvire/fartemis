@@ -52,6 +52,10 @@ urlpatterns = [
     path("case-study-dtac-datacenter/", TemplateView.as_view(template_name="pages/case_study_dtac_datacenter.html"), name="case_study_dtac_datacenter"),
     # case study scott tactical
     path("case-study-scott-tactical/", TemplateView.as_view(template_name="pages/case_study_scott_tactical.html"), name="case_study_scott_tactical"),
+    # AI success 2026 page
+    path('ai-success-2026/', TemplateView.as_view(template_name="pages/ai_success_2026.html"), name='ai_success_2026'),
+
+
 ]
 
 # API URLS

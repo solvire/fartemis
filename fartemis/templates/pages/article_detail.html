@@ -1,0 +1,32 @@
+<!-- dtac/templates/pages/article_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Article Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold">{{ article.title }}</h1>
+                    <p class="text-muted">Published on {{ article.published_date|date:"F j, Y" }}</p>
+                </div>
+
+                <!-- Article Content -->
+                <div class="article-content">
+                    {{ article.content|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Simple styling for the article content */
+.article-content {
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+</style>
+{% endblock %}

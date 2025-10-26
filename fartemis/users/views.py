@@ -14,7 +14,7 @@ from django.views.generic import DetailView
 from django.views.generic import RedirectView
 from django.views.generic import UpdateView
 
-from fartemis.users.models import User
+from fartemis.users.models import Article, User
 from fartemis.users.forms import ContactForm
 
 logger = logging.getLogger(__name__)
@@ -149,3 +149,25 @@ def contact_submit_view(request):
     # context = {'form': form, 'form_submitted_successfully': False}
     # return render(request, 'pages/partials/contact_form_partial.html', context)
     return HttpResponse("Method not allowed for this HTMX endpoint.", status=405)
+
+
+def contact_view(request):
+    """
+    Renders the dedicated contact page.
+    """
+    return render(request, 'pages/contact.html')
+
+
+def article_list_view(request):
+    """
+    Displays a list of all published articles.
+    """
+    articles = Article.objects.order_by('-published_date')
+    return render(request, 'pages/article_list.html', {'articles': articles})
+
+def article_detail_view(request, slug):
+    """
+    Displays a single article detail.
+    """
+    article = Article.objects.get(slug=slug)
+    return render(request, 'pages/article_detail.html', {'article': article})

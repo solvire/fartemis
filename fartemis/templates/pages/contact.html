@@ -1,0 +1,77 @@
+<!-- dtac/templates/contact.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Custom styles for the contact page */
+    .contact-hero {
+        padding: 80px 0;
+        text-align: center;
+    }
+
+    /* This section has a light background to perfectly frame the white Calendly widget */
+    .booking-section {
+        background-color: #f8f9fa; /* A soft, clean light gray/white */
+        padding: 80px 0;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* This adds a professional shadow and border to the widget itself */
+    .calendly-widget-wrapper {
+        max-width: 1024px; /* Limit the width on large screens */
+        margin: 0 auto;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden; /* Ensures the border-radius clips the iframe */
+    }
+    
+    .secondary-contact {
+        padding: 60px 0;
+        text-align: center;
+    }
+</style>
+
+<!-- Page Header -->
+<section class="contact-hero bg-dark">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="display-4 fw-bold mb-3">Let's Build Together</h1>
+                <p class="lead text-muted">
+                    The fastest way to get started is to book a complimentary strategy session below.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Calendly Booking Section -->
+<section class="booking-section" id="booking">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="calendly-widget-wrapper">
+                    <!-- 
+                      The Calendly widget. 
+                      Note we've removed the dark background parameters and added a primary_color.
+                    -->
+                    <div class="calendly-inline-widget" 
+                         data-url="https://calendly.com/stevenjscott/ai-strategy-session?primary_color=667eea"
+                         style="min-width:320px; height:720px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<!-- 
+  IMPORTANT: The Calendly script is required for the widget to load.
+  Place this at the end of your content.
+-->
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+
+{% endblock %}

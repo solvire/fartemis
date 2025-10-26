@@ -1,0 +1,41 @@
+<!-- dtac/templates/pages/article_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="py-5 bg-dark">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">DTAC Insights</h1>
+        <p class="lead text-muted">In-depth analysis, case studies, and resources from our team.</p>
+    </div>
+</section>
+
+<!-- Articles Grid -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            {% for article in articles %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-light shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h3 class="fs-5 fw-semibold">{{ article.title }}</h3>
+                        <p class="small text-muted flex-grow-1">
+                            {{ article.content|truncatewords:25 }}
+                        </p>
+                        <a href="{{ article.get_absolute_url }}" class="btn btn-sm btn-outline-primary">Read More →</a>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <small class="text-muted">Published on {{ article.published_date|date:"F j, Y" }}</small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col">
+                <p class="text-muted text-center">No articles have been published yet. Please check back soon.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

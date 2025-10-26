@@ -481,3 +481,25 @@ ZYTE_API_KEY = env("ZYTE_API_KEY", default=None)
 # REMOTE_OK_BASE_URL = 'https://remoteok.com'
 # WE_WORK_REMOTELY_BASE_URL = 'https://weworkremotely.com'
 # GITHUB_JOBS_BASE_URL = 'https://jobs.github.com'
+
+
+
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "'unsafe-inline'",  # Often needed for inline scripts and event handlers
+    "https://assets.calendly.com", # Allow Calendly's main script
+)
+CSP_CONNECT_SRC = (
+    "'self'",
+    "https://calendly.com", # Allow API calls to Calendly
+)
+CSP_FRAME_SRC = (
+    "'self'",
+    "https://calendly.com", # Allow the Calendly iframe to be embedded
+)
+CSP_STYLE_SRC = (
+    "'self'",
+    "https://assets.calendly.com", # Allow Calendly's stylesheets
+)
+CSP_IMG_SRC = ("'self'", "data:") # Allow images from your own domain and data URIs

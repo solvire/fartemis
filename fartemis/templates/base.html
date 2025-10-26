@@ -42,20 +42,20 @@
           <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav me-auto">
                   <li class="nav-item">
-                      <a class="nav-link fs-5 px-3" href="#expertise">Expertise</a>
+                      <a class="nav-link fs-5 px-3" href="/#expertise">Expertise</a>
                   </li>
                   <!-- <li class="nav-item">
                       <a class="nav-link fs-5 px-3" href="#approach">Our Approach</a>
                   </li> -->
                   <li class="nav-item">
-                      <a class="nav-link fs-5 px-3" href="#projects">Projects</a>
+                      <a class="nav-link fs-5 px-3" href="/#projects">Projects</a>
                   </li>
-                  <li class="nav-item">
-                      <a class="nav-link fs-5 px-3" href="#contact">Contact</a>
-                  </li>
+                  <!-- <li class="nav-item">
+                      <a class="nav-link fs-5 px-3" href="{% url 'users:contact' %}">Contact</a>
+                  </li> -->
               </ul>
               
-              <a href="#contact" class="btn btn-primary px-4 py-2 fs-6">Let's Talk</a>
+              <a href="{% url 'users:contact' %}" class="btn btn-primary">Let's Talk</a>
           </div>
       </div>
   </nav>
@@ -93,6 +93,14 @@
                     <a href="#" class="text-decoration-none text-muted small me-3">Privacy</a>
                     <a href="#" class="text-decoration-none text-muted small">Terms</a>
                 </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex flex-column align-items-md-end">
+                <a href="{% url 'users:article_list' %}" class="text-decoration-none text-muted small mb-2">Insights</a>
+                <a href="{% url 'ai_success_2026' %}" class="text-decoration-none text-muted small mb-2">AI Strategy Guide</a>
+                <a href="#" class="text-decoration-none text-muted small mb-2">Privacy</a>
+                <a href="#" class="text-decoration-none text-muted small">Terms</a>
             </div>
         </div>
     </footer>
