@@ -171,3 +171,4 @@ def article_detail_view(request, slug):
     """
     article = Article.objects.get(slug=slug)
     return render(request, 'pages/article_detail.html', {'article': article})
+

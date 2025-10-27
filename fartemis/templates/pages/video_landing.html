@@ -1,0 +1,128 @@
+<!-- dtac/templates/pages/video_landing.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Section styling */
+    .video-hero {
+        position: relative; /* Crucial for positioning the scroll arrow */
+        padding: 80px 0;
+        background-color: #000;
+    }
+    .booking-section {
+        background-color: #f8f9fa;
+        padding: 80px 0;
+        border-top: 1px solid #dee2e6;
+    }
+    .calendly-widget-wrapper {
+        max-width: 1024px;
+        margin: 0 auto;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* --- Scroll Arrow CSS --- */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: pointer;
+        z-index: 10;
+        animation: bounce 2s infinite;
+    }
+    .scroll-indicator .chevron {
+        width: 35px;
+        height: 35px;
+        border-right: 3px solid rgba(255, 255, 255, 0.5);
+        border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+        transform: rotate(45deg);
+        transition: all 0.3s ease;
+    }
+    .scroll-indicator:hover .chevron {
+        border-color: #667eea;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+        40% { transform: translateX(-50%) translateY(-10px); }
+        60% { transform: translateX(-50%) translateY(-5px); }
+    }
+</style>
+
+<!-- Video Hero Section -->
+<section class="video-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <h1 class="display-5 fw-bold mb-3">The 3 Strategies for AI-Driven Success</h1>
+                <p class="lead text-muted mb-5">
+                    In this 3-minute briefing, I walk through the exact framework we use to give our clients a decisive advantage.
+                </p>
+
+                <!-- Responsive Loom Embed Wrapper -->
+                <div class="ratio ratio-16x9 shadow-lg rounded-3">
+                    <!-- PASTE YOUR LOOM EMBED CODE HERE -->
+                    <iframe src="https://www.loom.com/embed/a2d9c5b87528405195631f23ff5de89d" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                </div>
+
+
+                <!--
+                  *** NEW CTA BUTTON ADDED HERE ***
+                -->
+                <div class="mt-5 mb-5">
+                    <button class="btn btn-primary btn-lg px-5 py-3" onclick="scrollToSection('booking')">
+                        Book Your AI Strategy Session
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- The scroll arrow -->
+    <div class="scroll-indicator" onclick="scrollToSection('booking')">
+        <div class="chevron"></div>
+    </div>
+</section>
+
+<!-- Calendly Booking Section -->
+<section class="booking-section" id="booking">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-6 fw-bold text-dark">Ready to Build Your Advantage?</h2>
+                <p class="lead text-secondary">Book your complimentary AI Strategy Session below.</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="calendly-widget-wrapper">
+                    <div class="calendly-inline-widget" 
+                         data-url="https://calendly.com/stevenjscott/ai-strategy-session?primary_color=667eea"
+                         style="min-width:320px; height:720px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Required Calendly Script -->
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+
+<!-- JavaScript for the smooth scroll -->
+<script>
+    function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+</script>
+
+{% endblock %}

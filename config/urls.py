@@ -55,6 +55,9 @@ urlpatterns = [
     # AI success 2026 page
     path('ai-success-2026/', TemplateView.as_view(template_name="pages/ai_success_2026.html"), name='ai_success_2026'),
 
+    # video landing page
+    path('private-briefing/', TemplateView.as_view(template_name="pages/video_landing.html"), name='video_landing'),
+
 
 ]
 
