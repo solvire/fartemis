@@ -93,6 +93,8 @@ USER django
 
 RUN DATABASE_URL="" \
   DJANGO_SETTINGS_MODULE="config.settings.test" \
+  EMAIL_HOST_USER="build" \
+  EMAIL_HOST_PASSWORD="build" \
   python manage.py compilemessages
 
 ENTRYPOINT ["/entrypoint"]
