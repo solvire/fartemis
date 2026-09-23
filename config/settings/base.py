@@ -7,7 +7,6 @@ from pathlib import Path
 
 import environ
 
-from .ssm_loader import get_default_region, load_env_from_ssm
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # fartemis/
 APPS_DIR = ROOT_DIR / "fartemis"
@@ -23,18 +22,6 @@ if READ_DOT_ENV_FILE:
     print("Loading : {}".format(ENV_FILE))
     env.read_env(ENV_FILE)
     print("The .env file has been loaded. See base.py for more information")
-
-
-
-APPLICATION_NAME = "fartemis"
-if SSM_ENVIRONMENT := env("SSM_ENVIRONMENT", default=None):
-    region = get_default_region()
-    print(f"Loading enviroinment [{SSM_ENVIRONMENT}] for parameter store in {region}")
-    # everyone gets global group
-    load_env_from_ssm(f"/{APPLICATION_NAME}/global/config/", region)
-    load_env_from_ssm(f"/{APPLICATION_NAME}/global/secret/", region)
-    load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/config/", region)
-    load_env_from_ssm(f"/{APPLICATION_NAME}/{SSM_ENVIRONMENT}/secret/", region)
 
 
 DJANGO_SETTINGS_MODULE = env("DJANGO_SETTINGS_MODULE")

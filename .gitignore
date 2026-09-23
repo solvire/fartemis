@@ -280,6 +280,7 @@ fartemis/media/
 .pytest_cache/
 .ipython/
 .env
+.env.live
 .envs/*
 !.envs/.local/
 
