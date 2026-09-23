@@ -25,7 +25,7 @@ if READ_DOT_ENV_FILE:
 
 
 DJANGO_SETTINGS_MODULE = env("DJANGO_SETTINGS_MODULE")
-print(f"Env {SSM_ENVIRONMENT} set for module: {DJANGO_SETTINGS_MODULE} ")
+print(f"Settings module: {DJANGO_SETTINGS_MODULE} ")
 DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
 
 # sentry setup
